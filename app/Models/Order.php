@@ -20,12 +20,62 @@ class Order extends Model
     {
         parent::boot();
 
+        // Notifikasi Otomatis saat Pesanan Baru Dibuat
+        static::created(function (Order $order) {
+            try {
+                $admins = User::where('can_access_admin_panel', true)->orWhere('role', 'admin')->get();
+                if ($admins->isEmpty()) {
+                    $admins = User::all();
+                }
+                foreach ($admins as $admin) {
+                    \Filament\Notifications\Notification::make()
+                        ->title('Pesanan Baru Masuk! 🎉')
+                        ->icon('heroicon-o-shopping-bag')
+                        ->iconColor('warning')
+                        ->body("Pesanan #{$order->id} dari {$order->customer_name} sebesar Rp " . number_format($order->total_amount, 0, ',', '.'))
+                        ->actions([
+                            \Filament\Notifications\Actions\Action::make('view')
+                                ->label('Lihat Pesanan')
+                                ->url('/admin/orders/' . $order->id . '/edit'),
+                        ])
+                        ->sendToDatabase($admin);
+                }
+            } catch (\Throwable $e) {
+                // Ignore silent notification errors
+            }
+        });
+
         // When an order status changes to paid, shipped, or completed, update user's total spent & rank
         static::updated(function (Order $order) {
             if ($order->isDirty('status') && in_array($order->status, ['paid', 'shipped', 'completed']) && $order->user_id) {
                 $user = User::find($order->user_id);
                 if ($user) {
                     $user->updateTotalSpent();
+                }
+            }
+
+            // Notifikasi Otomatis saat Pesanan Lunas
+            if ($order->isDirty('status') && $order->status === 'paid') {
+                try {
+                    $admins = User::where('can_access_admin_panel', true)->orWhere('role', 'admin')->get();
+                    if ($admins->isEmpty()) {
+                        $admins = User::all();
+                    }
+                    foreach ($admins as $admin) {
+                        \Filament\Notifications\Notification::make()
+                            ->title('Pembayaran Lunas! 💳')
+                            ->icon('heroicon-o-check-circle')
+                            ->iconColor('success')
+                            ->body("Pesanan #{$order->id} dari {$order->customer_name} telah LUNAS.")
+                            ->actions([
+                                \Filament\Notifications\Actions\Action::make('view')
+                                    ->label('Lihat Pesanan')
+                                    ->url('/admin/orders/' . $order->id . '/edit'),
+                            ])
+                            ->sendToDatabase($admin);
+                    }
+                } catch (\Throwable $e) {
+                    // Ignore silent notification errors
                 }
             }
 

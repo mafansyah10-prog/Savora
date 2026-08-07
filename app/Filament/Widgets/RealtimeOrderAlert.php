@@ -12,14 +12,17 @@ class RealtimeOrderAlert extends Widget
     protected int | string | array $columnSpan = 'full';
 
     public ?int $lastKnownOrderId = null;
+    public ?int $lastKnownPaidCount = null;
 
     public function mount()
     {
         $this->lastKnownOrderId = Order::max('id') ?? 0;
+        $this->lastKnownPaidCount = Order::where('status', 'paid')->count();
     }
 
     public function checkNewOrders()
     {
+        // 1. Cek Pesanan Baru Masuk
         $latestOrder = Order::latest('id')->first();
 
         if ($latestOrder && $this->lastKnownOrderId !== null && $latestOrder->id > $this->lastKnownOrderId) {
@@ -36,7 +39,7 @@ class RealtimeOrderAlert extends Widget
             \Filament\Notifications\Notification::make()
                 ->title('🎉 ORDERAN BARU MASUK!')
                 ->icon('heroicon-o-shopping-bag')
-                ->iconColor('success')
+                ->iconColor('warning')
                 ->body("Pesanan #{$latestOrder->id} dari {$latestOrder->customer_name} sebesar Rp " . number_format($latestOrder->total_amount, 0, ',', '.'))
                 ->actions([
                     \Filament\Notifications\Actions\Action::make('view')
@@ -45,25 +48,32 @@ class RealtimeOrderAlert extends Widget
                 ])
                 ->persistent()
                 ->send();
+        }
 
-            // Also save to database notifications for all admins
-            try {
-                $admins = \App\Models\User::where('can_access_admin_panel', true)->orWhere('role', 'admin')->get();
-                foreach ($admins as $admin) {
-                    \Filament\Notifications\Notification::make()
-                        ->title('Pesanan Baru Masuk! 🎉')
-                        ->icon('heroicon-o-shopping-bag')
-                        ->iconColor('success')
-                        ->body("Pesanan #{$latestOrder->id} dari {$latestOrder->customer_name} sebesar Rp " . number_format($latestOrder->total_amount, 0, ',', '.'))
-                        ->actions([
-                            \Filament\Notifications\Actions\Action::make('view')
-                                ->label('Lihat Pesanan')
-                                ->url('/admin/orders/' . $latestOrder->id . '/edit'),
-                        ])
-                        ->sendToDatabase($admin);
-                }
-            } catch (\Throwable $e) {
-                // Ignore silent database notification errors
+        // 2. Cek Pembayaran Lunas Masuk
+        $currentPaidCount = Order::where('status', 'paid')->count();
+        if ($this->lastKnownPaidCount !== null && $currentPaidCount > $this->lastKnownPaidCount) {
+            $latestPaidOrder = Order::where('status', 'paid')->latest('updated_at')->first();
+            $this->lastKnownPaidCount = $currentPaidCount;
+
+            if ($latestPaidOrder) {
+                $this->dispatch('play-order-sound', [
+                    'id' => $latestPaidOrder->id,
+                    'customer' => $latestPaidOrder->customer_name,
+                ]);
+
+                \Filament\Notifications\Notification::make()
+                    ->title('💳 PEMBAYARAN LUNAS MASUK!')
+                    ->icon('heroicon-o-check-circle')
+                    ->iconColor('success')
+                    ->body("Pesanan #{$latestPaidOrder->id} dari {$latestPaidOrder->customer_name} telah LUNAS.")
+                    ->actions([
+                        \Filament\Notifications\Actions\Action::make('view')
+                            ->label('Lihat Pesanan')
+                            ->url('/admin/orders/' . $latestPaidOrder->id . '/edit'),
+                    ])
+                    ->persistent()
+                    ->send();
             }
         }
     }
