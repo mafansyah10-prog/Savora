@@ -63,11 +63,13 @@ class VouchersTable
                     ->sortable()
                     ->placeholder('Semua Pangkat'),
 
-                TextColumn::make('user_id')
-                    ->label('Penerima')
+                TextColumn::make('user.name')
+                    ->label('Penerima Khusus')
                     ->badge()
-                    ->formatStateUsing(fn ($state) => $state ? 'Pengguna Baru' : 'Umum')
-                    ->color(fn ($state) => $state ? 'warning' : 'success')
+                    ->formatStateUsing(fn ($state, $record) => $record->user_id 
+                        ? ($record->user ? $record->user->name : 'User #' . $record->user_id) 
+                        : 'Umum (Semua Pelanggan)')
+                    ->color(fn ($record) => $record->user_id ? 'warning' : 'success')
                     ->sortable(),
 
                 TextColumn::make('orders_count')

@@ -80,11 +80,15 @@ class VoucherForm
                     ->placeholder('Semua Pangkat')
                     ->helperText('Kosongkan jika voucher dapat digunakan oleh semua pangkat pelanggan'),
 
-                \Filament\Forms\Components\Placeholder::make('receiver_type')
-                    ->label('Penerima Voucher')
-                    ->content(fn ($record) => $record && $record->user_id 
-                        ? 'Pengguna Baru: ' . ($record->user ? $record->user->name . ' (' . $record->user->email . ')' : 'User ID #' . $record->user_id) 
-                        : 'Umum (Semua Pelanggan)'),
+                Select::make('user_id')
+                    ->label('Penerima Khusus Customer (Personal Priority)')
+                    ->relationship('user', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->nullable()
+                    ->placeholder('Semua Pelanggan (Umum)')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->name} ({$record->email})")
+                    ->helperText('Jika dipilih, voucher ini HANYA DAPAT DIGUNAKAN oleh customer tersebut dan tidak bisa digunakan oleh customer lain.'),
 
                 DateTimePicker::make('expires_at')
                     ->label('Tanggal & Waktu Kadaluarsa')
