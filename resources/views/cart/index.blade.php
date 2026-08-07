@@ -379,33 +379,17 @@
                         </div>
 
                         {{-- Payment method --}}
-                        <div x-data="{ method: 'qris' }">
+                        <div x-data="{ method: 'bca' }">
                             <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-[0.25em] mb-3.5">Metode Pembayaran</h3>
                             <input type="hidden" name="payment_method" :value="method">
-                            <div class="grid grid-cols-3 gap-2.5">
+                            <div class="grid grid-cols-1 gap-2.5">
                                 <button type="button" @click="method = 'bca'"
-                                    :class="method === 'bca'
-                                        ? 'border-brand-cyan/60 bg-brand-cyan/10 text-brand-cyan shadow-[0_0_15px_rgba(78,205,196,0.15)]'
-                                        : 'border-gray-800 bg-black/20 text-gray-600 hover:border-gray-700 hover:text-gray-400'"
-                                    class="border rounded-xl py-3.5 px-2 text-[10px] font-black uppercase tracking-wider transition-all duration-200 flex flex-col items-center gap-1.5">
-                                    <i data-lucide="landmark" class="w-4 h-4"></i>
-                                    BCA VA
-                                </button>
-                                <button type="button" @click="method = 'mandiri'"
-                                    :class="method === 'mandiri'
-                                        ? 'border-brand-cyan/60 bg-brand-cyan/10 text-brand-cyan shadow-[0_0_15px_rgba(78,205,196,0.15)]'
-                                        : 'border-gray-800 bg-black/20 text-gray-600 hover:border-gray-700 hover:text-gray-400'"
-                                    class="border rounded-xl py-3.5 px-2 text-[10px] font-black uppercase tracking-wider transition-all duration-200 flex flex-col items-center gap-1.5">
-                                    <i data-lucide="landmark" class="w-4 h-4"></i>
-                                    Mandiri VA
-                                </button>
-                                <button type="button" @click="method = 'qris'"
-                                    :class="method === 'qris'
-                                        ? 'border-brand-cyan/60 bg-brand-cyan/10 text-brand-cyan shadow-[0_0_15px_rgba(78,205,196,0.15)]'
-                                        : 'border-gray-800 bg-black/20 text-gray-600 hover:border-gray-700 hover:text-gray-400'"
-                                    class="border rounded-xl py-3.5 px-2 text-[10px] font-black uppercase tracking-wider transition-all duration-200 flex flex-col items-center gap-1.5">
-                                    <i data-lucide="credit-card" class="w-4 h-4"></i>
-                                    QRIS
+                                    class="border border-brand-cyan/60 bg-brand-cyan/10 text-brand-cyan shadow-[0_0_15px_rgba(78,205,196,0.15)] rounded-xl py-3.5 px-4 text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-between cursor-default">
+                                    <div class="flex items-center gap-2.5">
+                                        <i data-lucide="landmark" class="w-5 h-5 text-brand-cyan"></i>
+                                        <span>Transfer / Virtual Account BCA</span>
+                                    </div>
+                                    <span class="text-[10px] bg-brand-cyan/20 px-2.5 py-1 rounded-full text-brand-cyan font-black tracking-widest">AKTIF</span>
                                 </button>
                             </div>
                             @if(\App\Models\Setting::getGlobal()->pakasir_is_active)

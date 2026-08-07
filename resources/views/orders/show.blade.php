@@ -271,8 +271,8 @@
                         <i data-lucide="credit-card" class="w-4 h-4"></i>
                         <p class="text-xs font-black uppercase tracking-wider">Menunggu Pembayaran Pakasir</p>
                     </div>
-                    <p class="text-xs text-gray-400 leading-normal">
-                        Silakan selesaikan pembayaran Anda menggunakan link aman Pakasir di bawah ini. Anda dapat membayar menggunakan @if($order->payment_method === 'qris') QRIS @elseif($order->payment_method === 'bca') Virtual Account BCA @elseif($order->payment_method === 'mandiri') Virtual Account Mandiri @else QRIS / Virtual Account @endif.
+                    <p class="text-xs text-gray-400 leading-relaxed">
+                        Silakan selesaikan pembayaran Anda menggunakan link aman Pakasir di bawah ini dengan Virtual Account / Transfer Bank BCA.
                     </p>
                     <a href="{{ $pakasirUrl }}" target="_blank"
                        class="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-brand-cyan to-teal-400 hover:from-teal-400 hover:to-brand-cyan text-[#0f1115] font-black text-xs uppercase tracking-widest rounded-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_6px_15px_rgba(78,205,196,0.3)] active:scale-95 text-center">
