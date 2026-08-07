@@ -1,0 +1,239 @@
+/* ═══════════════════════════════════════════════════════════════
+   Savora Admin — Premium Animations & UI Enhancements
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Keyframes ─────────────────────────────────────────────────── */
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: translateY(0);     }
+}
+
+@keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.94); }
+    to   { opacity: 1; transform: scale(1);    }
+}
+
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-16px); }
+    to   { opacity: 1; transform: translateX(0);     }
+}
+
+@keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(249,115,22,0); }
+    50%       { box-shadow: 0 0 0 6px rgba(249,115,22,0.12); }
+}
+
+@keyframes shimmer-slide {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center;  }
+}
+
+/* ── Widget Entrance Animations ────────────────────────────────── */
+
+@media (prefers-reduced-motion: no-preference) {
+    .fi-wi {
+        animation: fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .fi-wi:nth-child(1) { animation-delay: 0.05s; }
+    .fi-wi:nth-child(2) { animation-delay: 0.12s; }
+    .fi-wi:nth-child(3) { animation-delay: 0.19s; }
+    .fi-wi:nth-child(4) { animation-delay: 0.26s; }
+    .fi-wi:nth-child(5) { animation-delay: 0.33s; }
+    .fi-wi:nth-child(6) { animation-delay: 0.40s; }
+
+    /* ── Stats Cards ────────────────────────────────────────────────── */
+
+    .fi-wi-stats-overview-stat {
+        animation: fadeInScale 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    }
+
+    .fi-wi-stats-overview-stat:nth-child(1) { animation-delay: 0.15s; }
+    .fi-wi-stats-overview-stat:nth-child(2) { animation-delay: 0.25s; }
+    .fi-wi-stats-overview-stat:nth-child(3) { animation-delay: 0.35s; }
+
+    .fi-wi-stats-overview-stat:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3) !important;
+    }
+
+    /* ── Table Rows ─────────────────────────────────────────────────── */
+
+    .fi-ta-row {
+        animation: fadeInUp 0.35s ease-out both;
+        transition: background-color 0.15s ease !important;
+    }
+
+    .fi-ta-row:nth-child(1)  { animation-delay: 0.05s; }
+    .fi-ta-row:nth-child(2)  { animation-delay: 0.10s; }
+    .fi-ta-row:nth-child(3)  { animation-delay: 0.15s; }
+    .fi-ta-row:nth-child(4)  { animation-delay: 0.20s; }
+    .fi-ta-row:nth-child(5)  { animation-delay: 0.25s; }
+    .fi-ta-row:nth-child(6)  { animation-delay: 0.30s; }
+    .fi-ta-row:nth-child(7)  { animation-delay: 0.35s; }
+    .fi-ta-row:nth-child(8)  { animation-delay: 0.40s; }
+    .fi-ta-row:nth-child(n+9){ animation-delay: 0.44s; }
+
+    /* ── Sidebar ────────────────────────────────────────────────────── */
+
+    .fi-sidebar {
+        animation: slideInLeft 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* ── Page Header ────────────────────────────────────────────────── */
+
+    .fi-header {
+        animation: fadeInDown 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+    }
+
+
+    /* ── Modal / Slide-over Entrance ───────────────────────────────── */
+
+    .fi-modal-window {
+        animation: fadeInScale 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    /* ── Form Sections ─────────────────────────────────────────────── */
+
+    .fi-fo-component-ctn {
+        animation: fadeInUp 0.35s ease-out both;
+    }
+
+    /* ── Notification Toasts ───────────────────────────────────────── */
+
+    [x-data*="notifications"] > div {
+        animation: fadeInScale 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    /* ── Smooth Page Transitions ────────────────────────────────────── */
+
+    .fi-main {
+        animation: fadeInUp 0.3s ease-out both;
+    }
+}
+
+/* Non-motion-dependent interactive transitions */
+.fi-sidebar-nav-item {
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border-radius: 0.5rem !important;
+}
+
+.fi-sidebar-nav-item:hover {
+    transform: translateX(4px) !important;
+}
+
+/* ── Buttons ────────────────────────────────────────────────────── */
+
+.fi-btn {
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease !important;
+}
+
+.fi-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25) !important;
+}
+
+.fi-btn:active {
+    transform: scale(0.97) !important;
+}
+
+/* Primary action button pulse on active */
+.fi-btn-primary:focus {
+    animation: pulse-glow 1.5s ease-in-out 2;
+}
+
+/* ── Scrollbar (Webkit) ─────────────────────────────────────────── */
+
+::-webkit-scrollbar        { width: 8px; height: 8px; }
+::-webkit-scrollbar-track  { background: rgba(0, 0, 0, 0.1); }
+::-webkit-scrollbar-thumb  { background: #f97316; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #ea580c; }
+
+/* ── Ensure Vertical Scrollability ── */
+html, body {
+    overflow-y: auto !important;
+}
+
+/* ── Compact Dashboard Layout ────────────────────────────────────── */
+
+/* Reduce gap between dashboard widgets */
+.fi-wi-group {
+    gap: 0.75rem !important;
+}
+
+/* Reduce padding inside table cells for dashboard widgets */
+.fi-wi .fi-ta-cell {
+    padding-top: 0.375rem !important;
+    padding-bottom: 0.375rem !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+}
+
+/* Reduce header padding in dashboard table widgets */
+.fi-wi .fi-ta-header-cell {
+    padding-top: 0.375rem !important;
+    padding-bottom: 0.375rem !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+}
+
+/* Reduce space inside section contents for widgets */
+.fi-wi .fi-section-header {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+}
+
+.fi-wi .fi-section-content {
+    padding-top: 0.375rem !important;
+    padding-bottom: 0.375rem !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+}
+
+/* Reduce avatar size and spacing in table rows */
+.fi-wi .fi-ta-cell img {
+    width: 2rem !important;
+    height: 2rem !important;
+}
+
+/* Force widgets in the same row to stretch to match the tallest widget's height */
+.fi-wi-group {
+    align-items: stretch !important;
+}
+
+.fi-wi {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.fi-wi > section,
+.fi-wi > div {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+}
+
+.fi-wi .fi-section-content {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+}
+
+.fi-wi .fi-ta-content,
+.fi-wi .fi-ta-table {
+    height: 100% !important;
+}
+
+
