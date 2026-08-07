@@ -598,25 +598,7 @@ class CartController extends Controller
             }
         }
 
-        // Kirim notifikasi ke lonceng Admin Panel
-        try {
-            $admins = \App\Models\User::where('can_access_admin_panel', true)->orWhere('role', 'admin')->get();
-            foreach ($admins as $admin) {
-                \Filament\Notifications\Notification::make()
-                    ->title('Pesanan Baru Masuk! 🎉')
-                    ->icon('heroicon-o-shopping-bag')
-                    ->iconColor('warning')
-                    ->body("Pesanan #{$order->id} dari {$order->customer_name} sebesar Rp " . number_format($order->total_amount, 0, ',', '.'))
-                    ->actions([
-                        \Filament\Notifications\Actions\Action::make('view')
-                            ->label('Lihat Pesanan')
-                            ->url('/admin/orders/' . $order->id . '/edit'),
-                    ])
-                    ->sendToDatabase($admin);
-            }
-        } catch (\Throwable $e) {
-            // Ignore if notification fails silently
-        }
+
 
         session()->forget('cart');
         session()->forget('voucher');

@@ -33,11 +33,6 @@ class Order extends Model
                         ->icon('heroicon-o-shopping-bag')
                         ->iconColor('warning')
                         ->body("Pesanan #{$order->id} dari {$order->customer_name} sebesar Rp " . number_format($order->total_amount, 0, ',', '.'))
-                        ->actions([
-                            \Filament\Notifications\Actions\Action::make('view')
-                                ->label('Lihat Pesanan')
-                                ->url('/admin/orders/' . $order->id . '/edit'),
-                        ])
                         ->sendToDatabase($admin);
                 }
             } catch (\Throwable $e) {
@@ -67,11 +62,6 @@ class Order extends Model
                             ->icon('heroicon-o-check-circle')
                             ->iconColor('success')
                             ->body("Pesanan #{$order->id} dari {$order->customer_name} telah LUNAS.")
-                            ->actions([
-                                \Filament\Notifications\Actions\Action::make('view')
-                                    ->label('Lihat Pesanan')
-                                    ->url('/admin/orders/' . $order->id . '/edit'),
-                            ])
                             ->sendToDatabase($admin);
                     }
                 } catch (\Throwable $e) {
