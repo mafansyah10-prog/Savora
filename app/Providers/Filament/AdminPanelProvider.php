@@ -42,7 +42,6 @@ class AdminPanelProvider extends PanelProvider
             ->font('Outfit')
             ->defaultThemeMode(ThemeMode::Dark)
             ->databaseNotifications()
-            ->databaseNotificationsPolling('15s')
             ->colors([
                 'primary' => Color::Orange, // Main orange theme
                 'gray' => Color::Slate,     // Deep blue-gray background
