@@ -83,6 +83,33 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->assets([
                 Css::make('admin-animations', asset('css/admin-animations.css')),
-            ]);
+            ])
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::BODY_END,
+                fn (): string => \Illuminate\Support\Facades\Blade::render('
+                    <audio id="order-notification-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+                    <script>
+                        (function() {
+                            let lastCount = null;
+                            setInterval(function() {
+                                let badge = document.querySelector(".fi-topbar-database-notifications-btn .fi-badge") || document.querySelector("[aria-label*=\"notification\"] .fi-badge");
+                                if (badge) {
+                                    let count = parseInt(badge.innerText.replace(/\\D/g, "")) || 0;
+                                    if (lastCount !== null && count > lastCount) {
+                                        let audio = document.getElementById("order-notification-sound");
+                                        if (audio) {
+                                            audio.currentTime = 0;
+                                            audio.play().catch(function(err) {});
+                                        }
+                                    }
+                                    lastCount = count;
+                                } else {
+                                    if (lastCount === null) lastCount = 0;
+                                }
+                            }, 2000);
+                        })();
+                    </script>
+                ')
+            );
     }
 }
