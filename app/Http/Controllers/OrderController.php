@@ -84,6 +84,26 @@ class OrderController extends Controller
                 'payment_proof_analysis' => $analysis,
                 'status' => 'paid'
             ]);
+
+            // Kirim notifikasi ke lonceng Admin Panel
+            try {
+                $admins = \App\Models\User::where('can_access_admin_panel', true)->orWhere('role', 'admin')->get();
+                foreach ($admins as $admin) {
+                    \Filament\Notifications\Notification::make()
+                        ->title('Pembayaran Lunas (AI Verified)! 💳')
+                        ->icon('heroicon-o-check-circle')
+                        ->iconColor('success')
+                        ->body("Pesanan #{$order->id} dari {$order->customer_name} telah diverifikasi lunas.")
+                        ->actions([
+                            \Filament\Notifications\Actions\Action::make('view')
+                                ->label('Lihat Pesanan')
+                                ->url('/admin/orders/' . $order->id . '/edit'),
+                        ])
+                        ->sendToDatabase($admin);
+                }
+            } catch (\Throwable $e) {
+                // Ignore if notification fails silently
+            }
         }
 
         return back()->with('success', 'Pembayaran berhasil diverifikasi secara otomatis oleh sistem AI! Status pesanan Anda kini berubah menjadi Lunas.');

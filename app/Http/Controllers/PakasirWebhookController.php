@@ -51,6 +51,26 @@ class PakasirWebhookController extends Controller
                     ]
                 ]);
                 Log::info("Pakasir Webhook: Order #{$order->id} successfully updated to paid.");
+
+                // Kirim notifikasi ke lonceng Admin Panel
+                try {
+                    $admins = \App\Models\User::where('can_access_admin_panel', true)->orWhere('role', 'admin')->get();
+                    foreach ($admins as $admin) {
+                        \Filament\Notifications\Notification::make()
+                            ->title('Pembayaran Lunas via Pakasir! ⚡')
+                            ->icon('heroicon-o-check-circle')
+                            ->iconColor('success')
+                            ->body("Pesanan #{$order->id} dari {$order->customer_name} telah dibayar via Pakasir.")
+                            ->actions([
+                                \Filament\Notifications\Actions\Action::make('view')
+                                    ->label('Lihat Pesanan')
+                                    ->url('/admin/orders/' . $order->id . '/edit'),
+                            ])
+                            ->sendToDatabase($admin);
+                    }
+                } catch (\Throwable $e) {
+                    // Ignore if notification fails silently
+                }
             } else {
                 Log::info("Pakasir Webhook: Order #{$order->id} was already in status: {$order->status}. No change applied.");
             }
