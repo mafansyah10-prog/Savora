@@ -180,28 +180,5 @@ Route::get('/logout-cepat', function () {
 
 require __DIR__.'/auth.php';
 
-Route::get('/check-logs', function () {
-    $logPath = storage_path('logs/laravel.log');
-    if (!file_exists($logPath)) {
-        return 'File log tidak ditemukan.';
-    }
-    
-    $file = file($logPath);
-    $lastLines = array_slice($file, -50);
-    return '<pre>' . implode('', $lastLines) . '</pre>';
-});
-
-Route::get('/test-mail-avan', function () {
-    try {
-        \Illuminate\Support\Facades\Mail::raw('Halo Avan! Ini adalah email uji coba dari Savora.', function ($message) {
-            $message->to('avanboy10@gmail.com')
-                    ->subject('Uji Coba Pengiriman Email Savora');
-        });
-        return 'Email berhasil dikirim ke avanboy10@gmail.com!';
-    } catch (\Throwable $e) {
-        return 'Gagal mengirim email. Error: ' . $e->getMessage();
-    }
-});
-
 
 
