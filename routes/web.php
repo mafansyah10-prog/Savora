@@ -182,13 +182,29 @@ require __DIR__.'/auth.php';
 
 Route::get('/test-mail', function () {
     try {
+        $details = [
+            'env_queue_connection' => env('QUEUE_CONNECTION'),
+            'config_queue_default' => config('queue.default'),
+            'env_mail_mailer' => env('MAIL_MAILER'),
+            'config_mail_default' => config('mail.default'),
+            'env_mail_host' => env('MAIL_HOST'),
+        ];
+        
         \Illuminate\Support\Facades\Mail::raw('Halo! Ini adalah email uji coba dari Savora.', function ($message) {
             $message->to('m.afansyah10@gmail.com')
                     ->subject('Uji Coba Pengiriman Email Savora');
         });
-        return 'Email berhasil terkirim! Silakan cek inbox email m.afansyah10@gmail.com.';
+        
+        return response()->json([
+            'status' => 'Email berhasil terkirim! Silakan cek inbox email m.afansyah10@gmail.com.',
+            'details' => $details
+        ]);
     } catch (\Throwable $e) {
-        return 'Gagal mengirim email. Error: ' . $e->getMessage();
+        return response()->json([
+            'status' => 'Gagal mengirim email.',
+            'error' => $e->getMessage(),
+            'details' => $details ?? null
+        ]);
     }
 });
 
