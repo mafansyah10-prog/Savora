@@ -23,8 +23,8 @@ class AppServiceProvider extends ServiceProvider
         if (app()->environment('production') || (isset($_SERVER['HTTP_HOST']) && $_SERVER['HTTP_HOST'] === 'savorakuliner.my.id')) {
             config([
                 'mail.default' => 'sendmail',
-                'mail.from.address' => 'm.afansyah10@gmail.com',
-                'mail.from.name' => 'Savora',
+                'mail.from.address' => env('MAIL_FROM_ADDRESS', 'hello@savorakuliner.my.id'),
+                'mail.from.name' => env('MAIL_FROM_NAME', 'Savora'),
                 'queue.default' => 'sync',
             ]);
         }
