@@ -180,4 +180,16 @@ Route::get('/logout-cepat', function () {
 
 require __DIR__.'/auth.php';
 
+Route::get('/check-logs', function () {
+    $logPath = storage_path('logs/laravel.log');
+    if (!file_exists($logPath)) {
+        return 'File log tidak ditemukan.';
+    }
+    
+    $file = file($logPath);
+    $lastLines = array_slice($file, -50);
+    return '<pre>' . implode('', $lastLines) . '</pre>';
+});
+
+
 
