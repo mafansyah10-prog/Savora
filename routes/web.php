@@ -180,3 +180,16 @@ Route::get('/logout-cepat', function () {
 
 require __DIR__.'/auth.php';
 
+Route::get('/test-mail', function () {
+    try {
+        \Illuminate\Support\Facades\Mail::raw('Halo! Ini adalah email uji coba dari Savora.', function ($message) {
+            $message->to('m.afansyah10@gmail.com')
+                    ->subject('Uji Coba Pengiriman Email Savora');
+        });
+        return 'Email berhasil terkirim! Silakan cek inbox email m.afansyah10@gmail.com.';
+    } catch (\Throwable $e) {
+        return 'Gagal mengirim email. Error: ' . $e->getMessage();
+    }
+});
+
+
