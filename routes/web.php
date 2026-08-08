@@ -181,31 +181,49 @@ Route::get('/logout-cepat', function () {
 require __DIR__.'/auth.php';
 
 Route::get('/test-mail', function () {
+    $results = [];
+
+    // Uji 1: Sendmail (Bawaan Hosting)
     try {
-        $details = [
+        $sendmailMailer = app('mail.manager')->mailer('sendmail');
+        $sendmailMailer->raw('Halo! Ini adalah email uji coba dari Savora menggunakan Sendmail.', function ($message) {
+            $message->to('m.afansyah10@gmail.com')
+                    ->subject('Uji Coba Sendmail Savora');
+        });
+        $results['sendmail'] = 'SUKSES';
+    } catch (\Throwable $e) {
+        $results['sendmail'] = 'GAGAL: ' . $e->getMessage();
+    }
+
+    // Uji 2: Local SMTP (localhost:25 Tanpa SSL)
+    try {
+        config([
+            'mail.mailers.local_smtp' => [
+                'transport' => 'smtp',
+                'host' => 'localhost',
+                'port' => 25,
+                'encryption' => null,
+                'username' => null,
+                'password' => null,
+            ]
+        ]);
+        $localSmtpMailer = app('mail.manager')->mailer('local_smtp');
+        $localSmtpMailer->raw('Halo! Ini adalah email uji coba dari Savora menggunakan Local SMTP.', function ($message) {
+            $message->to('m.afansyah10@gmail.com')
+                    ->subject('Uji Coba Local SMTP Savora');
+        });
+        $results['local_smtp'] = 'SUKSES';
+    } catch (\Throwable $e) {
+        $results['local_smtp'] = 'GAGAL: ' . $e->getMessage();
+    }
+
+    return response()->json([
+        'results' => $results,
+        'details' => [
             'env_queue_connection' => env('QUEUE_CONNECTION'),
             'config_queue_default' => config('queue.default'),
-            'env_mail_mailer' => env('MAIL_MAILER'),
-            'config_mail_default' => config('mail.default'),
-            'env_mail_host' => env('MAIL_HOST'),
-        ];
-        
-        \Illuminate\Support\Facades\Mail::raw('Halo! Ini adalah email uji coba dari Savora.', function ($message) {
-            $message->to('m.afansyah10@gmail.com')
-                    ->subject('Uji Coba Pengiriman Email Savora');
-        });
-        
-        return response()->json([
-            'status' => 'Email berhasil terkirim! Silakan cek inbox email m.afansyah10@gmail.com.',
-            'details' => $details
-        ]);
-    } catch (\Throwable $e) {
-        return response()->json([
-            'status' => 'Gagal mengirim email.',
-            'error' => $e->getMessage(),
-            'details' => $details ?? null
-        ]);
-    }
+        ]
+    ]);
 });
 
 
