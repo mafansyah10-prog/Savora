@@ -185,6 +185,41 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
                             ->helperText('Jumlah maksimal voucher pendaftaran ini dapat digunakan oleh setiap pengguna baru (biasanya diisi 1)'),
                     ])->columns(2),
 
+                Section::make('Pengaturan Batas Minimal Pangkat Loyalitas')
+                    ->description('Tentukan nominal belanja minimum untuk naik ke setiap peringkat loyalty.')
+                    ->components([
+                        Forms\Components\TextInput::make('rank_bronze_min')
+                            ->label('Batas Minimum Perunggu (🥉)')
+                            ->numeric()
+                            ->required()
+                            ->minValue(0)
+                            ->prefix('Rp'),
+                        Forms\Components\TextInput::make('rank_silver_min')
+                            ->label('Batas Minimum Perak (🥈)')
+                            ->numeric()
+                            ->required()
+                            ->minValue(0)
+                            ->prefix('Rp'),
+                        Forms\Components\TextInput::make('rank_gold_min')
+                            ->label('Batas Minimum Emas (🥇)')
+                            ->numeric()
+                            ->required()
+                            ->minValue(0)
+                            ->prefix('Rp'),
+                        Forms\Components\TextInput::make('rank_platinum_min')
+                            ->label('Batas Minimum Platinum (💎)')
+                            ->numeric()
+                            ->required()
+                            ->minValue(0)
+                            ->prefix('Rp'),
+                        Forms\Components\TextInput::make('rank_diamond_min')
+                            ->label('Batas Minimum VIP Diamond (👑)')
+                            ->numeric()
+                            ->required()
+                            ->minValue(0)
+                            ->prefix('Rp'),
+                    ])->columns(2),
+
                 Section::make('Tampilan Beranda')
                     ->description('Teks yang muncul di halaman utama (Hero Banner & Tentang Kami).')
                     ->components([

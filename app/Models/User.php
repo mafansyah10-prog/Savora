@@ -68,6 +68,22 @@ class User extends Authenticatable implements FilamentUser
         return 'Akun Anda telah diblokir secara permanen.';
     }
 
+    protected static function booted(): void
+    {
+        try {
+            $setting = Setting::getGlobal();
+            if ($setting) {
+                self::$ranks['perunggu']['min'] = (int) ($setting->rank_bronze_min ?? 200000);
+                self::$ranks['perak']['min'] = (int) ($setting->rank_silver_min ?? 1000000);
+                self::$ranks['emas']['min'] = (int) ($setting->rank_gold_min ?? 3000000);
+                self::$ranks['platinum']['min'] = (int) ($setting->rank_platinum_min ?? 10000000);
+                self::$ranks['diamond']['min'] = (int) ($setting->rank_diamond_min ?? 25000000);
+            }
+        } catch (\Throwable $e) {
+            // Fallback during migrations/seeding
+        }
+    }
+
     // ─── Ranks Definition ─────────────────────────────────────────────────────
     public static array $ranks = [
         'reguler' => ['label' => 'Reguler',  'min' => 0,          'icon' => '⚪', 'color' => 'gray',   'hex' => '#6b7280'],
