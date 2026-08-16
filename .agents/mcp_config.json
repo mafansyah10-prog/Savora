@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "domainesia-hosting": {
+      "serverUrl": "https://mcp.savorakuliner.my.id/",
+      "headers": {
+        "Authorization": "Bearer bc9eece2b5026eda9df834ce8189f799daad213b335e1c609a50fd50b3c7cab0"
+      }
+    }
+  }
+}
