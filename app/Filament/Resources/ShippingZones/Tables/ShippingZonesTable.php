@@ -23,7 +23,7 @@ class ShippingZonesTable
 
                 TextColumn::make('cost')
                     ->label('Biaya Ongkir')
-                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ',', '.'))
+                    ->formatStateUsing(fn ($state) => 'Rp '.number_format($state, 0, ',', '.'))
                     ->sortable()
                     ->badge()
                     ->color('success'),

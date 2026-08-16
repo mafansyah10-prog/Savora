@@ -9,9 +9,12 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class LowStockAlert extends BaseWidget
 {
-    protected int | string | array $columnSpan = 1;
+    protected int|string|array $columnSpan = 1;
+
     protected static ?int $sort = 7;
+
     protected static ?string $heading = '⚠️ Peringatan Stok Menipis';
+
     protected ?string $pollingInterval = '5s';
 
     public function table(Table $table): Table

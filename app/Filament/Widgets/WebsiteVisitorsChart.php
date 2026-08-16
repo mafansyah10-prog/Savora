@@ -8,23 +8,26 @@ use Filament\Widgets\ChartWidget;
 class WebsiteVisitorsChart extends ChartWidget
 {
     protected ?string $heading = 'Statistik Pesanan';
+
     protected static ?int $sort = 5;
-    protected int | string | array $columnSpan = 1;
+
+    protected int|string|array $columnSpan = 1;
+
     protected ?string $pollingInterval = '3s';
 
     protected function getData(): array
     {
-        $pending   = Order::where('status', 'pending')->count();
-        $paid      = Order::where('status', 'paid')->count();
-        $shipped   = Order::where('status', 'shipped')->count();
+        $pending = Order::where('status', 'pending')->count();
+        $paid = Order::where('status', 'paid')->count();
+        $shipped = Order::where('status', 'shipped')->count();
         $completed = Order::where('status', 'completed')->count();
         $cancelled = Order::where('status', 'cancelled')->count();
 
         // Fallback sample data if database is empty
         if (($pending + $paid + $shipped + $completed + $cancelled) === 0) {
-            $pending   = 42;
-            $paid      = 27;
-            $shipped   = 15;
+            $pending = 42;
+            $paid = 27;
+            $shipped = 15;
             $completed = 10;
             $cancelled = 6;
         }

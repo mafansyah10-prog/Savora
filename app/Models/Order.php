@@ -2,17 +2,19 @@
 
 namespace App\Models;
 
+use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 
 class Order extends Model
 {
     protected $guarded = [];
 
     protected $casts = [
-        'user_id'                => 'integer',
-        'items'                  => 'array',
-        'stock_deducted'         => 'boolean',
+        'user_id' => 'integer',
+        'items' => 'array',
+        'stock_deducted' => 'boolean',
         'payment_proof_analysis' => 'array',
     ];
 
@@ -28,11 +30,11 @@ class Order extends Model
                     $admins = User::all();
                 }
                 foreach ($admins as $admin) {
-                    \Filament\Notifications\Notification::make()
+                    Notification::make()
                         ->title('Pesanan Baru Masuk! 🎉')
                         ->icon('heroicon-o-shopping-bag')
                         ->iconColor('warning')
-                        ->body("Pesanan #{$order->id} dari {$order->customer_name} sebesar Rp " . number_format($order->total_amount, 0, ',', '.'))
+                        ->body("Pesanan #{$order->id} dari {$order->customer_name} sebesar Rp ".number_format($order->total_amount, 0, ',', '.'))
                         ->sendToDatabase($admin);
                 }
             } catch (\Throwable $e) {
@@ -57,7 +59,7 @@ class Order extends Model
                         $admins = User::all();
                     }
                     foreach ($admins as $admin) {
-                        \Filament\Notifications\Notification::make()
+                        Notification::make()
                             ->title('Pembayaran Lunas! 💳')
                             ->icon('heroicon-o-check-circle')
                             ->iconColor('success')
@@ -70,14 +72,14 @@ class Order extends Model
             }
 
             // Deduct stock if paid, shipped, or completed and not yet deducted
-            if ($order->isDirty('status') && in_array($order->status, ['paid', 'shipped', 'completed']) && !$order->stock_deducted) {
+            if ($order->isDirty('status') && in_array($order->status, ['paid', 'shipped', 'completed']) && ! $order->stock_deducted) {
                 $items = $order->items ?? [];
-                
+
                 try {
-                    \Illuminate\Support\Facades\DB::transaction(function () use ($items) {
+                    DB::transaction(function () use ($items) {
                         foreach ($items as $item) {
                             $productId = $item['product_id'] ?? null;
-                            $quantity  = $item['quantity']   ?? 0;
+                            $quantity = $item['quantity'] ?? 0;
 
                             if ($productId && $quantity > 0) {
                                 // Mengambil data produk dengan Pessimistic Locking
@@ -85,8 +87,8 @@ class Order extends Model
                                     ->lockForUpdate()
                                     ->first();
 
-                                if (!$product) {
-                                    throw new \Exception("Produk tidak ditemukan.");
+                                if (! $product) {
+                                    throw new \Exception('Produk tidak ditemukan.');
                                 }
 
                                 if ($product->stock < $quantity) {
@@ -105,7 +107,7 @@ class Order extends Model
                     // Batalkan perubahan status order jika stok tidak mencukupi (kembalikan ke status sebelumnya)
                     $order->status = $order->getOriginal('status');
                     $order->updateQuietly();
-                    
+
                     // Lempar exception ke controller/verifikator agar transaksi dibatalkan
                     throw $e;
                 }

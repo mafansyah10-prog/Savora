@@ -2,13 +2,13 @@
 
 namespace App\Filament\Resources\Orders\Schemas;
 
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\Select;
+use App\Models\Product;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
-
-use Filament\Forms\Components\FileUpload;
+use Illuminate\Support\HtmlString;
 
 class OrderForm
 {
@@ -34,56 +34,56 @@ class OrderForm
                     ->label('Detail Menu Yang Dipesan')
                     ->columnSpanFull()
                     ->content(function ($record) {
-                        if (!$record || empty($record->items)) {
+                        if (! $record || empty($record->items)) {
                             return 'Tidak ada item';
                         }
-                        
+
                         $html = '<div class="space-y-4">';
                         foreach ($record->items as $item) {
-                            $product = \App\Models\Product::find($item['product_id'] ?? null);
+                            $product = Product::find($item['product_id'] ?? null);
                             $basePrice = $product ? $product->selling_price : $item['price'];
-                            
+
                             $html .= '<div style="background-color: rgba(17, 24, 39, 0.5); padding: 1rem; border: 1px solid rgba(31, 41, 55, 0.8); border-radius: 0.75rem; margin-bottom: 0.75rem;">';
                             $html .= '  <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 0.875rem; color: #fff;">';
-                            $html .= '    <span>' . e($item['name']) . ' (' . e($item['quantity']) . 'x)</span>';
-                            $html .= '    <span>Rp ' . number_format($item['price'] * $item['quantity'], 0, ',', '.') . '</span>';
+                            $html .= '    <span>'.e($item['name']).' ('.e($item['quantity']).'x)</span>';
+                            $html .= '    <span>Rp '.number_format($item['price'] * $item['quantity'], 0, ',', '.').'</span>';
                             $html .= '  </div>';
-                            
+
                             $html .= '  <div style="font-size: 0.75rem; color: #9ca3af; margin-top: 0.25rem;">';
-                            $html .= '    Harga Satuan: Rp ' . number_format($basePrice, 0, ',', '.');
+                            $html .= '    Harga Satuan: Rp '.number_format($basePrice, 0, ',', '.');
                             if ($product && $item['price'] > $product->selling_price) {
-                                $html .= ' (+ Opsi: Rp ' . number_format($item['price'] - $product->selling_price, 0, ',', '.') . ')';
+                                $html .= ' (+ Opsi: Rp '.number_format($item['price'] - $product->selling_price, 0, ',', '.').')';
                             }
                             $html .= '  </div>';
-                            
-                            if (!empty($item['options'])) {
+
+                            if (! empty($item['options'])) {
                                 $opts = [];
-                                if(!empty($item['options']['spiciness_level'])) {
+                                if (! empty($item['options']['spiciness_level'])) {
                                     $spicinessName = $item['options']['spiciness_level'];
-                                    $formattedSpiciness = (stripos($spicinessName, 'level') === false && is_numeric($spicinessName)) ? 'Level ' . $spicinessName : $spicinessName;
-                                    $opts[] = 'Pedas: ' . e($formattedSpiciness);
+                                    $formattedSpiciness = (stripos($spicinessName, 'level') === false && is_numeric($spicinessName)) ? 'Level '.$spicinessName : $spicinessName;
+                                    $opts[] = 'Pedas: '.e($formattedSpiciness);
                                 }
-                                if(!empty($item['options']['sauce'])) {
-                                    $opts[] = 'Saus: ' . e($item['options']['sauce']);
+                                if (! empty($item['options']['sauce'])) {
+                                    $opts[] = 'Saus: '.e($item['options']['sauce']);
                                 }
-                                if(!empty($item['options']['toppings'])) {
-                                    $opts[] = 'Topping: ' . e(implode(', ', $item['options']['toppings']));
+                                if (! empty($item['options']['toppings'])) {
+                                    $opts[] = 'Topping: '.e(implode(', ', $item['options']['toppings']));
                                 }
-                                if(!empty($item['options']['additionals'])) {
-                                    $opts[] = 'Tambahan: ' . e(implode(', ', $item['options']['additionals']));
+                                if (! empty($item['options']['additionals'])) {
+                                    $opts[] = 'Tambahan: '.e(implode(', ', $item['options']['additionals']));
                                 }
-                                
+
                                 if (count($opts) > 0) {
                                     $html .= '  <div style="font-size: 11px; color: #fbbf24; font-weight: 600; font-style: italic; margin-top: 0.5rem; background-color: rgba(0, 0, 0, 0.3); border: 1px solid rgba(120, 53, 4, 0.3); padding: 0.25rem 0.5rem; border-radius: 0.25rem; display: inline-block;">';
-                                    $html .= '    ' . implode(' | ', $opts);
+                                    $html .= '    '.implode(' | ', $opts);
                                     $html .= '  </div>';
                                 }
                             }
                             $html .= '</div>';
                         }
                         $html .= '</div>';
-                        
-                        return new \Illuminate\Support\HtmlString($html);
+
+                        return new HtmlString($html);
                     }),
                 TextInput::make('shipping_zone_name')
                     ->label('Wilayah Pengiriman')
@@ -113,9 +113,9 @@ class OrderForm
                 Select::make('status')
                     ->label('Status Pesanan')
                     ->options([
-                        'pending'   => 'Pending',
-                        'paid'      => 'Lunas',
-                        'shipped'   => 'Sedang Dikirim',
+                        'pending' => 'Pending',
+                        'paid' => 'Lunas',
+                        'shipped' => 'Sedang Dikirim',
                         'completed' => 'Selesai',
                         'cancelled' => 'Dibatalkan',
                     ])

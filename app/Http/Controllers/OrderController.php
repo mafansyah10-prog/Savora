@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Services\MidtransService;
+use App\Services\PaymentProofAiVerifier;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
@@ -43,7 +46,9 @@ class OrderController extends Controller
             ]);
         }
 
-        return view('orders.show', compact('order'));
+        $snapToken = MidtransService::getSnapToken($order);
+
+        return view('orders.show', compact('order', 'snapToken'));
     }
 
     public function uploadPaymentProof(Request $request, Order $order)
@@ -59,32 +64,31 @@ class OrderController extends Controller
             $file = $request->file('payment_proof');
 
             // Panggil Layanan AI Verifikator
-            $aiVerifier = new \App\Services\PaymentProofAiVerifier();
+            $aiVerifier = new PaymentProofAiVerifier;
             $analysis = $aiVerifier->analyze($file, $order);
 
             if ($analysis['status'] === 'fake') {
                 // Simpan log analisis gagal ke order agar admin tahu
                 $order->update([
-                    'payment_proof_analysis' => $analysis
+                    'payment_proof_analysis' => $analysis,
                 ]);
 
                 return back()->with('error', $analysis['reason']);
             }
 
             // Hapus file lama jika ada
-            if ($order->payment_proof && \Illuminate\Support\Facades\Storage::disk('public')->exists($order->payment_proof)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($order->payment_proof);
+            if ($order->payment_proof && Storage::disk('public')->exists($order->payment_proof)) {
+                Storage::disk('public')->delete($order->payment_proof);
             }
 
             $path = $file->store('payment_proofs', 'public');
-            
+
             // Konfirmasi Pembayaran Otomatis: Update status pesanan ke 'paid' (Lunas)
             $order->update([
                 'payment_proof' => $path,
                 'payment_proof_analysis' => $analysis,
-                'status' => 'paid'
+                'status' => 'paid',
             ]);
-
 
         }
 

@@ -3,19 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
 
 class Voucher extends Model
 {
     protected $guarded = [];
 
     protected $casts = [
-        'is_active'        => 'boolean',
-        'is_hidden'        => 'boolean',
-        'expires_at'       => 'datetime',
-        'value'            => 'decimal:2',
+        'is_active' => 'boolean',
+        'is_hidden' => 'boolean',
+        'expires_at' => 'datetime',
+        'value' => 'decimal:2',
         'min_order_amount' => 'decimal:2',
-        'limit_per_user'   => 'integer',
+        'limit_per_user' => 'integer',
     ];
 
     /**
@@ -23,7 +22,7 @@ class Voucher extends Model
      */
     public function isValidForAmount($amount): bool
     {
-        if (!$this->is_active) {
+        if (! $this->is_active) {
             return false;
         }
 
@@ -36,24 +35,24 @@ class Voucher extends Model
         }
 
         if ($this->user_id !== null) {
-            if (!auth()->check() || auth()->id() !== $this->user_id) {
+            if (! auth()->check() || auth()->id() !== $this->user_id) {
                 return false;
             }
         }
 
         if ($this->rank !== null) {
-            if (!auth()->check()) {
+            if (! auth()->check()) {
                 return false;
             }
             $user = auth()->user();
-            $rankKeys = array_keys(\App\Models\User::$ranks);
+            $rankKeys = array_keys(User::$ranks);
             $userRankIndex = array_search($user->rank ?? 'reguler', $rankKeys);
             $voucherRankIndex = array_search($this->rank, $rankKeys);
             if ($userRankIndex === false || $voucherRankIndex === false || $userRankIndex < $voucherRankIndex) {
                 return false;
             }
         }
-        
+
         if (auth()->check()) {
             $limitPerUser = $this->limit_per_user;
             if ($limitPerUser === null && (str_starts_with($this->code, 'BARU-') || $this->user_id !== null)) {
@@ -103,18 +102,18 @@ class Voucher extends Model
     {
         $rankLabel = '';
         if ($this->rank) {
-            $rankLabel = ' Member ' . (\App\Models\User::$ranks[$this->rank]['label'] ?? ucfirst($this->rank));
+            $rankLabel = ' Member '.(User::$ranks[$this->rank]['label'] ?? ucfirst($this->rank));
         }
-        
+
         $prefix = '';
         if (str_starts_with($this->code, 'BARU-') || $this->user_id !== null) {
             $prefix = 'Voucher Pengguna Baru — ';
         }
-        
+
         if ($this->type === 'fixed') {
-            return $prefix . 'Potongan Rp ' . number_format($this->value, 0, ',', '.') . $rankLabel;
+            return $prefix.'Potongan Rp '.number_format($this->value, 0, ',', '.').$rankLabel;
         } else {
-            return $prefix . 'Diskon ' . number_format($this->value, 0) . '%' . $rankLabel;
+            return $prefix.'Diskon '.number_format($this->value, 0).'%'.$rankLabel;
         }
     }
 

@@ -2,10 +2,12 @@
 
 namespace App\Filament\Resources\Vouchers\Schemas;
 
+use App\Models\Voucher;
+use Filament\Actions\Action;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\DateTimePicker;
 use Filament\Schemas\Schema;
 
 class VoucherForm
@@ -22,18 +24,19 @@ class VoucherForm
                     ->dehydrateStateUsing(fn ($state) => strtoupper($state))
                     ->default(function () {
                         do {
-                            $code = 'ADM-' . strtoupper(substr(str_shuffle('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 6));
-                        } while (\App\Models\Voucher::where('code', $code)->exists());
+                            $code = 'ADM-'.strtoupper(substr(str_shuffle('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 6));
+                        } while (Voucher::where('code', $code)->exists());
+
                         return $code;
                     })
                     ->suffixAction(
-                        \Filament\Actions\Action::make('generateCode')
+                        Action::make('generateCode')
                             ->icon('heroicon-m-sparkles')
                             ->tooltip('Acak Kode Voucher')
                             ->action(function ($set) {
                                 do {
-                                    $code = 'ADM-' . strtoupper(substr(str_shuffle('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 6));
-                                } while (\App\Models\Voucher::where('code', $code)->exists());
+                                    $code = 'ADM-'.strtoupper(substr(str_shuffle('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 6));
+                                } while (Voucher::where('code', $code)->exists());
                                 $set('code', $code);
                             })
                     )
@@ -69,12 +72,12 @@ class VoucherForm
                 Select::make('rank')
                     ->label('Pangkat Loyalitas')
                     ->options([
-                        'reguler'  => '⚪ Reguler',
+                        'reguler' => '⚪ Reguler',
                         'perunggu' => '🥉 Perunggu',
-                        'perak'    => '🥈 Perak',
-                        'emas'     => '🥇 Emas',
+                        'perak' => '🥈 Perak',
+                        'emas' => '🥇 Emas',
                         'platinum' => '💎 Platinum',
-                        'diamond'  => '👑 VIP Diamond',
+                        'diamond' => '👑 VIP Diamond',
                     ])
                     ->nullable()
                     ->placeholder('Semua Pangkat')

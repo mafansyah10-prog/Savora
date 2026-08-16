@@ -2,31 +2,33 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Dashboard;
+use App\Filament\Pages\ManageSettings;
+use App\Filament\Widgets\CustomerRankWidget;
+use App\Filament\Widgets\NewCustomers;
+use App\Filament\Widgets\RealtimeOrderAlert;
+use App\Filament\Widgets\RevenueChart;
+use App\Filament\Widgets\SalesCalendarWidget;
+use App\Filament\Widgets\StatsOverview;
+use App\Filament\Widgets\TopSellingProducts;
+use App\Filament\Widgets\WebsiteVisitorsChart;
+use Filament\Enums\ThemeMode;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use App\Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
+use Filament\Support\Assets\Css;
 use Filament\Support\Colors\Color;
-use Filament\Widgets\AccountWidget;
-use Filament\Enums\ThemeMode;
-use App\Filament\Widgets\GreetingWidget;
-use App\Filament\Widgets\StatsOverview;
-use App\Filament\Widgets\RevenueChart;
-use App\Filament\Widgets\WebsiteVisitorsChart;
-use App\Filament\Widgets\TopSellingProducts;
-use App\Filament\Widgets\NewCustomers;
-use App\Filament\Widgets\SalesCalendarWidget;
-use App\Filament\Widgets\CustomerRankWidget;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Filament\Support\Assets\Css;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -54,11 +56,11 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,
-                \App\Filament\Pages\ManageSettings::class,
+                ManageSettings::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
-                \App\Filament\Widgets\RealtimeOrderAlert::class,
+                RealtimeOrderAlert::class,
                 StatsOverview::class,
                 RevenueChart::class,
                 WebsiteVisitorsChart::class,
@@ -85,8 +87,8 @@ class AdminPanelProvider extends PanelProvider
                 Css::make('admin-animations', asset('css/admin-animations.css')),
             ])
             ->renderHook(
-                \Filament\View\PanelsRenderHook::BODY_END,
-                fn (): string => \Illuminate\Support\Facades\Blade::render('
+                PanelsRenderHook::BODY_END,
+                fn (): string => Blade::render('
                     <audio id="order-notification-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
                     <script>
                         (function() {

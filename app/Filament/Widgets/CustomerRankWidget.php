@@ -4,13 +4,13 @@ namespace App\Filament\Widgets;
 
 use App\Models\User;
 use App\Models\Voucher;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Actions\Action;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 
 class CustomerRankWidget extends BaseWidget
@@ -19,7 +19,7 @@ class CustomerRankWidget extends BaseWidget
 
     protected static ?int $sort = 3;
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected ?string $pollingInterval = '3s';
 
@@ -48,24 +48,24 @@ class CustomerRankWidget extends BaseWidget
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'perunggu' => '🥉 Perunggu',
-                        'perak'    => '🥈 Perak',
-                        'emas'     => '🥇 Emas',
+                        'perak' => '🥈 Perak',
+                        'emas' => '🥇 Emas',
                         'platinum' => '💎 Platinum',
-                        'diamond'  => '👑 VIP Diamond',
-                        default    => $state,
+                        'diamond' => '👑 VIP Diamond',
+                        default => $state,
                     })
                     ->color(fn (string $state): string => match ($state) {
                         'perunggu' => 'warning',
-                        'perak'    => 'gray',
-                        'emas'     => 'warning',
+                        'perak' => 'gray',
+                        'emas' => 'warning',
                         'platinum' => 'info',
-                        'diamond'  => 'primary',
-                        default    => 'gray',
+                        'diamond' => 'primary',
+                        default => 'gray',
                     }),
 
                 TextColumn::make('total_spent')
                     ->label('Total Belanja')
-                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ',', '.'))
+                    ->formatStateUsing(fn ($state) => 'Rp '.number_format($state, 0, ',', '.'))
                     ->sortable(),
 
                 TextColumn::make('rank_upgraded_at')
@@ -74,24 +74,24 @@ class CustomerRankWidget extends BaseWidget
                     ->sortable(),
             ])
             ->recordActions([
-                 Action::make('send_voucher')
+                Action::make('send_voucher')
                     ->label('Kirim Voucher')
                     ->icon('heroicon-o-gift')
                     ->color('success')
                     ->form([
                         TextInput::make('code')
                             ->label('Kode Voucher')
-                            ->default(fn ($record) => strtoupper('ADM-RNK-' . strtoupper(explode('@', $record->email)[0]) . '-' . rand(100, 999)))
+                            ->default(fn ($record) => strtoupper('ADM-RNK-'.strtoupper(explode('@', $record->email)[0]).'-'.rand(100, 999)))
                             ->required()
                             ->unique(table: 'vouchers', column: 'code', ignoreRecord: false)
                             ->suffixAction(
-                                \Filament\Actions\Action::make('generateCode')
+                                Action::make('generateCode')
                                     ->icon('heroicon-m-sparkles')
                                     ->tooltip('Acak Kode Voucher')
                                     ->action(function ($set) {
                                         do {
-                                            $code = 'ADM-RNK-' . strtoupper(substr(str_shuffle('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 6));
-                                        } while (\App\Models\Voucher::where('code', $code)->exists());
+                                            $code = 'ADM-RNK-'.strtoupper(substr(str_shuffle('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 6));
+                                        } while (Voucher::where('code', $code)->exists());
                                         $set('code', $code);
                                     })
                             ),
@@ -99,7 +99,7 @@ class CustomerRankWidget extends BaseWidget
                         Select::make('type')
                             ->label('Tipe Potongan')
                             ->options([
-                                'fixed'   => 'Nominal Tetap (Rupiah)',
+                                'fixed' => 'Nominal Tetap (Rupiah)',
                                 'percent' => 'Persentase (%)',
                             ])
                             ->required()
@@ -124,12 +124,12 @@ class CustomerRankWidget extends BaseWidget
                     ])
                     ->action(function (array $data, $record) {
                         Voucher::create([
-                            'code'             => strtoupper($data['code']),
-                            'type'             => $data['type'],
-                            'value'            => $data['value'],
+                            'code' => strtoupper($data['code']),
+                            'type' => $data['type'],
+                            'value' => $data['value'],
                             'min_order_amount' => $data['min_order_amount'],
-                            'expires_at'       => $data['expires_at'],
-                            'is_active'        => true,
+                            'expires_at' => $data['expires_at'],
+                            'is_active' => true,
                         ]);
 
                         // Mark as notified so this customer is removed from the list
@@ -137,7 +137,7 @@ class CustomerRankWidget extends BaseWidget
 
                         Notification::make()
                             ->title('Voucher Terkirim!')
-                            ->body('Voucher ' . strtoupper($data['code']) . ' berhasil dibuat untuk ' . $record->name . '. Customer dapat melihatnya di halaman akun mereka.')
+                            ->body('Voucher '.strtoupper($data['code']).' berhasil dibuat untuk '.$record->name.'. Customer dapat melihatnya di halaman akun mereka.')
                             ->success()
                             ->send();
                     }),

@@ -2,17 +2,18 @@
 
 namespace App\Filament\Resources\Orders\Tables;
 
+use App\Models\Order;
+use Carbon\Carbon;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Table;
-
-use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Select;
-use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class OrdersTable
 {
@@ -49,20 +50,20 @@ class OrdersTable
                     ->badge()
                     ->label('Status')
                     ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'pending'   => 'Pending',
-                        'paid'      => 'Lunas',
-                        'shipped'   => 'Dikirim',
+                        'pending' => 'Pending',
+                        'paid' => 'Lunas',
+                        'shipped' => 'Dikirim',
                         'completed' => 'Selesai',
                         'cancelled' => 'Dibatalkan',
-                        default     => ucfirst($state),
+                        default => ucfirst($state),
                     })
                     ->color(fn (string $state): string => match ($state) {
-                        'pending'   => 'warning',
-                        'paid'      => 'success',
-                        'shipped'   => 'info',
+                        'pending' => 'warning',
+                        'paid' => 'success',
+                        'shipped' => 'info',
                         'completed' => 'primary',
                         'cancelled' => 'danger',
-                        default     => 'gray',
+                        default => 'gray',
                     }),
                 TextColumn::make('created_at')
                     ->label('Tanggal Pesan')
@@ -87,25 +88,26 @@ class OrdersTable
                     ->indicateUsing(function (array $data): array {
                         $indicators = [];
                         if ($data['created_date'] ?? null) {
-                            $indicators[] = 'Tanggal: ' . \Carbon\Carbon::parse($data['created_date'])->translatedFormat('d F Y');
+                            $indicators[] = 'Tanggal: '.Carbon::parse($data['created_date'])->translatedFormat('d F Y');
                         }
+
                         return $indicators;
-                    })
+                    }),
             ])
             ->filtersLayout(FiltersLayout::AboveContent)
             ->filtersFormColumns(3)
             ->recordActions([
-                \Filament\Actions\EditAction::make(),
-                \Filament\Actions\Action::make('print')
+                EditAction::make(),
+                Action::make('print')
                     ->label('Cetak Struk')
                     ->icon('heroicon-o-printer')
                     ->color('success')
-                    ->url(fn (\App\Models\Order $record): string => route('orders.print', $record))
+                    ->url(fn (Order $record): string => route('orders.print', $record))
                     ->openUrlInNewTab(),
             ])
             ->toolbarActions([
-                \Filament\Actions\BulkActionGroup::make([
-                    \Filament\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

@@ -34,7 +34,7 @@ class EditOrder extends EditRecord
 
             foreach ($items as $item) {
                 $productId = $item['product_id'] ?? null;
-                $quantity  = $item['quantity']   ?? 0;
+                $quantity = $item['quantity'] ?? 0;
 
                 if ($productId && $quantity > 0) {
                     Product::where('id', $productId)
@@ -48,4 +48,3 @@ class EditOrder extends EditRecord
         }
     }
 }
-

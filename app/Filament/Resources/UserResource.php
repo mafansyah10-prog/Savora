@@ -9,11 +9,10 @@ use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\Tables\UsersTable;
 use App\Models\User;
 use BackedEnum;
-use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
-use Filament\Support\Icons\Heroicon;
+use UnitEnum;
 
 class UserResource extends Resource
 {

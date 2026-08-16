@@ -23,21 +23,24 @@ class Setting extends Model
     public static function getGlobal()
     {
         if (app()->environment('testing')) {
-            $setting = self::first() ?? new self();
+            $setting = self::first() ?? new self;
+
             return $setting;
         }
 
         $cached = Cache::rememberForever('global_settings', function () {
-            $setting = self::first() ?? new self();
+            $setting = self::first() ?? new self;
+
             return [
                 'attributes' => $setting->getAttributes(),
                 'exists' => $setting->exists,
             ];
         });
 
-        $setting = new self();
+        $setting = new self;
         $setting->setRawAttributes($cached['attributes']);
         $setting->exists = $cached['exists'];
+
         return $setting;
     }
 }

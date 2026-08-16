@@ -2,11 +2,12 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Pages\CreateRecord;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class UserForm
@@ -50,7 +51,7 @@ class UserForm
                     ->default(false)
                     ->live(),
 
-                \Filament\Forms\Components\DateTimePicker::make('blocked_until')
+                DateTimePicker::make('blocked_until')
                     ->label('Blokir Sampai Waktu')
                     ->helperText('Biarkan kosong jika ingin memblokir secara permanen.')
                     ->placeholder('Pilih tanggal dan waktu...')
@@ -66,10 +67,11 @@ class UserForm
                             'manager' => 'Manager',
                             'customer' => 'Customer',
                         ];
-                        if ($record && $record->role && !array_key_exists($record->role, $options)) {
+                        if ($record && $record->role && ! array_key_exists($record->role, $options)) {
                             $options[$record->role] = ucfirst($record->role);
                         }
                         $options['custom'] = '+ Peran Baru (Kustom)...';
+
                         return $options;
                     })
                     ->default('customer')

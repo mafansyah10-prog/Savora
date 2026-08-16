@@ -3,9 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\Category;
+use App\Models\Order;
 use App\Models\Product;
+use App\Models\Setting;
 use App\Models\User;
+use App\Models\Voucher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class SavoraPagesTest extends TestCase
@@ -17,9 +21,9 @@ class SavoraPagesTest extends TestCase
         parent::setUp();
 
         // Clear settings cache for testing
-        \Illuminate\Support\Facades\Cache::forget('global_settings');
+        Cache::forget('global_settings');
 
-        \App\Models\Setting::create([
+        Setting::create([
             'store_name' => 'Savora Test',
             'whatsapp_number' => '6289601905406',
             'instagram_url' => 'https://instagram.com/savora',
@@ -33,8 +37,8 @@ class SavoraPagesTest extends TestCase
     public function test_home_page_can_be_rendered()
     {
         // Force settings database check
-        $global = \App\Models\Setting::getGlobal();
-        
+        $global = Setting::getGlobal();
+
         $response = $this->get(route('home'));
         $response->assertStatus(200);
         $response->assertSee($global->store_name);
@@ -147,7 +151,7 @@ class SavoraPagesTest extends TestCase
                 'image' => null,
                 'stock' => 10,
                 'category' => 'Gourmet',
-            ]
+            ],
         ]);
 
         $response = $this->actingAs($user)->followingRedirects()->post(route('cart.checkout'), [
@@ -176,13 +180,13 @@ class SavoraPagesTest extends TestCase
 
     public function test_pakasir_webhook_successfully_updates_order_status()
     {
-        $setting = \App\Models\Setting::first();
+        $setting = Setting::first();
         $setting->update([
             'pakasir_project' => 'my-test-project',
             'pakasir_api_key' => 'secret-api-key',
             'pakasir_is_active' => true,
         ]);
-        \Illuminate\Support\Facades\Cache::forget('global_settings');
+        Cache::forget('global_settings');
 
         $user = User::create([
             'name' => 'John Webhook',
@@ -205,7 +209,7 @@ class SavoraPagesTest extends TestCase
             'is_active' => true,
         ]);
 
-        $order = \App\Models\Order::create([
+        $order = Order::create([
             'user_id' => $user->id,
             'customer_name' => 'John Webhook',
             'customer_phone' => '08123456789',
@@ -219,7 +223,7 @@ class SavoraPagesTest extends TestCase
                     'name' => $product->name,
                     'quantity' => 2,
                     'price' => 75000,
-                ]
+                ],
             ],
         ]);
 
@@ -245,7 +249,7 @@ class SavoraPagesTest extends TestCase
 
     public function test_voucher_requires_shopping_amount_higher_than_discount_value()
     {
-        $voucher = \App\Models\Voucher::create([
+        $voucher = Voucher::create([
             'code' => 'BIGDISCOUNT',
             'type' => 'fixed',
             'value' => 50000,
@@ -266,5 +270,119 @@ class SavoraPagesTest extends TestCase
         $subtotal = 60000;
         $this->assertTrue($voucher->isValidForAmount($subtotal));
     }
-}
 
+    public function test_midtrans_webhook_successfully_updates_order_status()
+    {
+        $setting = Setting::first();
+        $setting->update([
+            'midtrans_server_key' => 'test-server-key',
+            'midtrans_is_active' => true,
+        ]);
+        Cache::forget('global_settings');
+
+        $user = User::create([
+            'name' => 'John Midtrans',
+            'email' => 'midtrans@test.com',
+            'password' => bcrypt('password'),
+        ]);
+
+        $category = Category::create([
+            'name' => 'Dessert',
+            'slug' => 'dessert',
+            'icon' => 'cake',
+        ]);
+
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => 'Chocolate Lava',
+            'slug' => 'chocolate-lava',
+            'price' => 50000,
+            'stock' => 10,
+            'is_active' => true,
+        ]);
+
+        $order = Order::create([
+            'user_id' => $user->id,
+            'customer_name' => 'John Midtrans',
+            'customer_phone' => '08123456789',
+            'shipping_address' => 'Jl. Test Midtrans',
+            'total_amount' => 50000,
+            'status' => 'pending',
+            'payment_method' => 'midtrans',
+            'items' => [
+                [
+                    'product_id' => $product->id,
+                    'name' => $product->name,
+                    'quantity' => 1,
+                    'price' => 50000,
+                ],
+            ],
+        ]);
+
+        // Calculate signature key: order_id + status_code + gross_amount + serverKey
+        $statusCode = '200';
+        $grossAmount = '50000.00';
+        $serverKey = 'test-server-key';
+        $signatureKey = hash('sha512', $order->id.$statusCode.$grossAmount.$serverKey);
+
+        $response = $this->postJson('/webhook/midtrans', [
+            'order_id' => $order->id,
+            'status_code' => $statusCode,
+            'gross_amount' => $grossAmount,
+            'signature_key' => $signatureKey,
+            'transaction_status' => 'settlement',
+            'payment_type' => 'qris',
+            'transaction_id' => 'midtrans-tx-12345',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson(['success' => true]);
+
+        $order->refresh();
+        $this->assertEquals('paid', $order->status);
+
+        $product->refresh();
+        $this->assertEquals(9, $product->stock);
+        $this->assertTrue($order->stock_deducted);
+    }
+
+    public function test_manual_payment_is_active_overrides_pakasir_and_renders_manual_details()
+    {
+        $setting = Setting::first();
+        $setting->update([
+            'pakasir_is_active' => true,
+            'manual_payment_is_active' => true,
+            'bank_name' => 'BCA Test',
+            'bank_account_number' => '9876543210',
+            'bank_account_name' => 'Savora Test Manual',
+        ]);
+        Cache::forget('global_settings');
+
+        $user = User::create([
+            'name' => 'John Manual',
+            'email' => 'manual@test.com',
+            'password' => bcrypt('password'),
+        ]);
+
+        $order = Order::create([
+            'user_id' => $user->id,
+            'customer_name' => 'John Manual',
+            'customer_phone' => '08123456789',
+            'shipping_address' => 'Jl. Test Manual',
+            'total_amount' => 25000,
+            'status' => 'pending',
+            'payment_method' => 'bca',
+            'items' => [],
+        ]);
+
+        $response = $this->actingAs($user)->get(route('orders.show', $order));
+
+        $response->assertStatus(200);
+        $response->assertSee('Instruksi Pembayaran Manual');
+        $response->assertSee('BCA Test');
+        $response->assertSee('9876543210');
+        $response->assertSee('Savora Test Manual');
+        // Make sure it doesn't render Pakasir button when manual_payment_is_active is true
+        $response->assertDontSee('Menunggu Pembayaran Pakasir');
+    }
+}

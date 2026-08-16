@@ -34,6 +34,6 @@ class ShippingZone extends Model
      */
     public function getFormattedCostAttribute(): string
     {
-        return 'Rp ' . number_format($this->cost, 0, ',', '.');
+        return 'Rp '.number_format($this->cost, 0, ',', '.');
     }
 }

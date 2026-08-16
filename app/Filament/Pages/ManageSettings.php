@@ -4,10 +4,10 @@ namespace App\Filament\Pages;
 
 use App\Models\Setting;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Pages\Page;
-use Filament\Actions\Action;
 use Filament\Notifications\Notification;
+use Filament\Pages\Page;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 
 class ManageSettings extends Page implements Forms\Contracts\HasForms
 {
@@ -32,6 +32,7 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
     {
         return 100;
     }
+
     protected string $view = 'filament.pages.manage-settings';
 
     public ?array $data = [];
@@ -46,11 +47,11 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
         }
     }
 
-    public function form(\Filament\Schemas\Schema $schema): \Filament\Schemas\Schema
+    public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                \Filament\Schemas\Components\Section::make('Informasi Dasar')
+                Section::make('Informasi Dasar')
                     ->description('Pengaturan nama dan kontak toko.')
                     ->components([
                         Forms\Components\TextInput::make('store_name')
@@ -70,8 +71,7 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
                             ->required(),
                     ])->columns(2),
 
-
-                \Filament\Schemas\Components\Section::make('Integrasi Pakasir Payment Gateway')
+                Section::make('Integrasi Pakasir Payment Gateway')
                     ->description('Pengaturan untuk pembayaran otomatis via Pakasir.')
                     ->components([
                         Forms\Components\Toggle::make('pakasir_is_active')
@@ -88,7 +88,50 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
                             ->required(fn ($get) => $get('pakasir_is_active')),
                     ])->columns(3),
 
-                \Filament\Schemas\Components\Section::make('Voucher Pendaftaran Pengguna Baru')
+                Section::make('Integrasi Midtrans Payment Gateway')
+                    ->description('Pengaturan untuk pembayaran otomatis via Midtrans (termasuk DANA, QRIS, dll).')
+                    ->components([
+                        Forms\Components\Toggle::make('midtrans_is_active')
+                            ->label('Aktifkan Midtrans')
+                            ->default(false)
+                            ->live(),
+                        Forms\Components\TextInput::make('midtrans_client_key')
+                            ->label('Midtrans Client Key')
+                            ->required(fn ($get) => $get('midtrans_is_active')),
+                        Forms\Components\TextInput::make('midtrans_server_key')
+                            ->label('Midtrans Server Key')
+                            ->password()
+                            ->revealable()
+                            ->required(fn ($get) => $get('midtrans_is_active')),
+                        Forms\Components\Toggle::make('midtrans_is_production')
+                            ->label('Mode Production (Live)')
+                            ->default(false),
+                    ])->columns(2),
+
+                Section::make('Pembayaran Manual (Transfer Bank / QRIS)')
+                    ->description('Pengaturan untuk pembayaran manual ke rekening bank atau QRIS toko.')
+                    ->components([
+                        Forms\Components\Toggle::make('manual_payment_is_active')
+                            ->label('Aktifkan Pembayaran Manual')
+                            ->default(false)
+                            ->live(),
+                        Forms\Components\TextInput::make('bank_name')
+                            ->label('Nama Bank')
+                            ->required(fn ($get) => $get('manual_payment_is_active')),
+                        Forms\Components\TextInput::make('bank_account_number')
+                            ->label('Nomor Rekening')
+                            ->required(fn ($get) => $get('manual_payment_is_active')),
+                        Forms\Components\TextInput::make('bank_account_name')
+                            ->label('Nama Pemilik Rekening')
+                            ->required(fn ($get) => $get('manual_payment_is_active')),
+                        Forms\Components\FileUpload::make('qris_image')
+                            ->label('QRIS Toko (Gambar)')
+                            ->image()
+                            ->directory('qris')
+                            ->nullable(),
+                    ])->columns(2),
+
+                Section::make('Voucher Pendaftaran Pengguna Baru')
                     ->description('Pengaturan voucher otomatis yang didapatkan ketika customer baru mendaftar.')
                     ->components([
                         Forms\Components\Toggle::make('new_user_voucher_is_active')
@@ -142,7 +185,7 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
                             ->helperText('Jumlah maksimal voucher pendaftaran ini dapat digunakan oleh setiap pengguna baru (biasanya diisi 1)'),
                     ])->columns(2),
 
-                \Filament\Schemas\Components\Section::make('Tampilan Beranda')
+                Section::make('Tampilan Beranda')
                     ->description('Teks yang muncul di halaman utama (Hero Banner & Tentang Kami).')
                     ->components([
                         Forms\Components\TextInput::make('hero_title')

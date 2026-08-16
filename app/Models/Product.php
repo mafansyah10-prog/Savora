@@ -11,12 +11,12 @@ class Product extends Model
     protected $casts = [
         'enable_spiciness' => 'boolean',
         'spiciness_levels' => 'array',
-        'enable_toppings'  => 'boolean',
-        'toppings'         => 'array',
-        'enable_sauces'    => 'boolean',
-        'sauces'           => 'array',
+        'enable_toppings' => 'boolean',
+        'toppings' => 'array',
+        'enable_sauces' => 'boolean',
+        'sauces' => 'array',
         'enable_additionals' => 'boolean',
-        'additionals'      => 'array',
+        'additionals' => 'array',
     ];
 
     public function category()

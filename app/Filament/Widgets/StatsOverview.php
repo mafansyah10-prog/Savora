@@ -3,19 +3,20 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Order;
-use App\Models\Product;
 use App\Models\User;
+use Carbon\Carbon;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-use Filament\Widgets\Concerns\InteractsWithPageFilters;
-use Carbon\Carbon;
 
 class StatsOverview extends BaseWidget
 {
     use InteractsWithPageFilters;
 
     protected static ?int $sort = 1;
-    protected int | string | array $columnSpan = 'full';
+
+    protected int|string|array $columnSpan = 'full';
+
     protected ?string $pollingInterval = '3s';
 
     protected function getStats(): array
@@ -57,8 +58,8 @@ class StatsOverview extends BaseWidget
         })->toArray();
 
         return [
-            Stat::make('Total Pendapatan', 'Rp ' . number_format($totalRevenue, 0, ',', '.'))
-                ->description($pendingOrders . ' pesanan menunggu konfirmasi')
+            Stat::make('Total Pendapatan', 'Rp '.number_format($totalRevenue, 0, ',', '.'))
+                ->description($pendingOrders.' pesanan menunggu konfirmasi')
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
                 ->chart($dailyRevenue ?: [0, 0, 0, 0, 0, 0, 0])
                 ->color('success'),
@@ -68,11 +69,10 @@ class StatsOverview extends BaseWidget
                 ->descriptionIcon('heroicon-m-user-group')
                 ->color('info'),
 
-            Stat::make("Rata-rata Nilai Order ({$dateLabel})", 'Rp ' . number_format($avgRevenue, 0, ',', '.'))
-                ->description('Per transaksi dari ' . $totalOrders . ' pesanan')
+            Stat::make("Rata-rata Nilai Order ({$dateLabel})", 'Rp '.number_format($avgRevenue, 0, ',', '.'))
+                ->description('Per transaksi dari '.$totalOrders.' pesanan')
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('warning'),
         ];
     }
 }
-

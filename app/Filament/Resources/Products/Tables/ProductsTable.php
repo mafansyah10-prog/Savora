@@ -27,9 +27,9 @@ class ProductsTable
                 TextColumn::make('price')
                     ->label('Harga')
                     ->html()
-                    ->formatStateUsing(fn ($state, $record) => $record->hasDiscount() 
-                        ? '<span style="text-decoration: line-through; color: #888; margin-right: 5px;">Rp ' . number_format($record->price, 0, ',', '.') . '</span> <span style="font-weight: bold; color: #4CAF50;">Rp ' . number_format($record->discount_price, 0, ',', '.') . '</span>'
-                        : 'Rp ' . number_format($state, 0, ',', '.'))
+                    ->formatStateUsing(fn ($state, $record) => $record->hasDiscount()
+                        ? '<span style="text-decoration: line-through; color: #888; margin-right: 5px;">Rp '.number_format($record->price, 0, ',', '.').'</span> <span style="font-weight: bold; color: #4CAF50;">Rp '.number_format($record->discount_price, 0, ',', '.').'</span>'
+                        : 'Rp '.number_format($state, 0, ',', '.'))
                     ->sortable(),
                 TextColumn::make('stock')
                     ->label('Stok')
@@ -37,9 +37,9 @@ class ProductsTable
                     ->sortable()
                     ->badge()
                     ->color(fn ($state): string => match (true) {
-                        $state <= 0  => 'danger',
-                        $state <= 5  => 'warning',
-                        default      => 'success',
+                        $state <= 0 => 'danger',
+                        $state <= 5 => 'warning',
+                        default => 'success',
                     }),
                 IconColumn::make('is_active')
                     ->label('Aktif')

@@ -392,7 +392,7 @@
                                     <span class="text-[10px] bg-brand-cyan/20 px-2.5 py-1 rounded-full text-brand-cyan font-black tracking-widest">AKTIF</span>
                                 </button>
                             </div>
-                            @if(\App\Models\Setting::getGlobal()->pakasir_is_active)
+                            @if(\App\Models\Setting::getGlobal()->pakasir_is_active && !\App\Models\Setting::getGlobal()->manual_payment_is_active)
                             <div class="mt-4 bg-brand-cyan/5 border border-brand-cyan/20 rounded-xl p-4 space-y-3">
                                 <div class="flex items-center gap-2 text-brand-cyan">
                                     <i data-lucide="credit-card" class="w-4 h-4"></i>

@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\Banners\Schemas;
 
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\Select;
 use Filament\Schemas\Schema;
 
 class BannerForm

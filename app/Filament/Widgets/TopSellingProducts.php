@@ -9,9 +9,12 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class TopSellingProducts extends BaseWidget
 {
-    protected int | string | array $columnSpan = 2;
+    protected int|string|array $columnSpan = 2;
+
     protected static ?int $sort = 6;
+
     protected static ?string $heading = 'Top Selling Product';
+
     protected ?string $pollingInterval = '3s';
 
     public function table(Table $table): Table
@@ -45,7 +48,7 @@ class TopSellingProducts extends BaseWidget
 
                 Tables\Columns\TextColumn::make('price')
                     ->label('Harga')
-                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ',', '.'))
+                    ->formatStateUsing(fn ($state) => 'Rp '.number_format($state, 0, ',', '.'))
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('stock')

@@ -14,13 +14,13 @@ return new class extends Migration
         Schema::table('products', function (Blueprint $table) {
             $table->boolean('enable_spiciness')->default(false)->after('is_active');
             $table->json('spiciness_levels')->nullable()->after('enable_spiciness');
-            
+
             $table->boolean('enable_toppings')->default(false)->after('spiciness_levels');
             $table->json('toppings')->nullable()->after('enable_toppings');
-            
+
             $table->boolean('enable_sauces')->default(false)->after('toppings');
             $table->json('sauces')->nullable()->after('enable_sauces');
-            
+
             $table->boolean('enable_additionals')->default(false)->after('sauces');
             $table->json('additionals')->nullable()->after('enable_additionals');
         });

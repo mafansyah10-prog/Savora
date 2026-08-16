@@ -8,8 +8,11 @@ use Filament\Widgets\ChartWidget;
 class RevenueChart extends ChartWidget
 {
     protected ?string $heading = 'Revenue';
+
     protected static ?int $sort = 4;
-    protected int | string | array $columnSpan = 2;
+
+    protected int|string|array $columnSpan = 2;
+
     protected ?string $pollingInterval = '3s';
 
     protected function getData(): array
@@ -35,8 +38,8 @@ class RevenueChart extends ChartWidget
 
         // If all zeros (no real data), use sample data for visual demo
         $hasData = array_sum($onlineData) > 0 || array_sum($offlineData) > 0;
-        if (!$hasData) {
-            $onlineData  = [60000, 110000, 210000, 150000, 250000, 100000, 180000, 120000];
+        if (! $hasData) {
+            $onlineData = [60000, 110000, 210000, 150000, 250000, 100000, 180000, 120000];
             $offlineData = [90000, 200000, 100000, 180000, 80000,  240000, 130000, 200000];
         }
 

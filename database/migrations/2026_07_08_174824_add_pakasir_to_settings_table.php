@@ -12,13 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('settings', function (Blueprint $table) {
-            if (!Schema::hasColumn('settings', 'pakasir_project')) {
+            if (! Schema::hasColumn('settings', 'pakasir_project')) {
                 $table->string('pakasir_project')->nullable()->after('qris_image');
             }
-            if (!Schema::hasColumn('settings', 'pakasir_api_key')) {
+            if (! Schema::hasColumn('settings', 'pakasir_api_key')) {
                 $table->string('pakasir_api_key')->nullable()->after('pakasir_project');
             }
-            if (!Schema::hasColumn('settings', 'pakasir_is_active')) {
+            if (! Schema::hasColumn('settings', 'pakasir_is_active')) {
                 $table->boolean('pakasir_is_active')->default(false)->after('pakasir_api_key');
             }
         });

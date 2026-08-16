@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\ShippingZone;
+use App\Models\User;
+use App\Models\Voucher;
+use App\Services\MidtransService;
 use Illuminate\Http\Request;
 
 class CartController extends Controller
@@ -14,47 +18,48 @@ class CartController extends Controller
     public function index()
     {
         $cart = session()->get('cart', []);
-        
+
         $subtotal = 0;
         $originalSubtotal = 0;
         $productDiscount = 0;
 
-        if (!empty($cart)) {
+        if (! empty($cart)) {
             $productIds = collect($cart)->map(function ($item, $key) {
-                return $item['product_id'] ?? (is_numeric($key) ? (int)$key : null);
+                return $item['product_id'] ?? (is_numeric($key) ? (int) $key : null);
             })->filter()->unique()->toArray();
             $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
             foreach ($cart as $cartKey => $item) {
-                $pId = $item['product_id'] ?? (is_numeric($cartKey) ? (int)$cartKey : null);
+                $pId = $item['product_id'] ?? (is_numeric($cartKey) ? (int) $cartKey : null);
                 $product = $products->get($pId);
                 if ($product) {
                     $qty = $item['quantity'];
-                    
+
                     // Hitung total extra dari opsi
                     $extraPrice = 0;
                     $options = $item['options'] ?? [];
-                    
+
                     // Spiciness extra price
-                    if (!empty($options['spiciness_level']) && !empty($product->spiciness_levels)) {
-                        $spicinessObj = collect($product->spiciness_levels)->first(function($level) use ($options) {
+                    if (! empty($options['spiciness_level']) && ! empty($product->spiciness_levels)) {
+                        $spicinessObj = collect($product->spiciness_levels)->first(function ($level) use ($options) {
                             $levelName = is_array($level) ? ($level['name'] ?? '') : $level;
+
                             return $levelName === $options['spiciness_level'];
                         });
                         if ($spicinessObj && is_array($spicinessObj)) {
                             $extraPrice += (float) ($spicinessObj['price'] ?? 0);
                         }
                     }
-                    
+
                     // Sauce extra price
-                    if (!empty($options['sauce']) && !empty($product->sauces)) {
+                    if (! empty($options['sauce']) && ! empty($product->sauces)) {
                         $sauceObj = collect($product->sauces)->firstWhere('name', $options['sauce']);
                         if ($sauceObj) {
                             $extraPrice += (float) ($sauceObj['price'] ?? 0);
                         }
                     }
-                    
+
                     // Toppings extra price
-                    if (!empty($options['toppings']) && !empty($product->toppings)) {
+                    if (! empty($options['toppings']) && ! empty($product->toppings)) {
                         foreach ($options['toppings'] as $topName) {
                             $topObj = collect($product->toppings)->firstWhere('name', $topName);
                             if ($topObj) {
@@ -64,7 +69,7 @@ class CartController extends Controller
                     }
 
                     // Additionals extra price
-                    if (!empty($options['additionals']) && !empty($product->additionals)) {
+                    if (! empty($options['additionals']) && ! empty($product->additionals)) {
                         foreach ($options['additionals'] as $addName) {
                             $addObj = collect($product->additionals)->firstWhere('name', $addName);
                             if ($addObj) {
@@ -72,15 +77,15 @@ class CartController extends Controller
                             }
                         }
                     }
-                    
+
                     $originalPrice = (float) $product->price + $extraPrice;
                     $sellingPrice = (float) $product->selling_price + $extraPrice;
-                    
+
                     $originalSubtotal += $originalPrice * $qty;
                     $subtotal += $sellingPrice * $qty;
-                    
+
                     if ($product->hasDiscount()) {
-                        $productDiscount += ((float)$product->price - (float)$product->selling_price) * $qty;
+                        $productDiscount += ((float) $product->price - (float) $product->selling_price) * $qty;
                     }
                 } else {
                     $subtotal += $item['price'] * $item['quantity'];
@@ -90,19 +95,19 @@ class CartController extends Controller
         }
 
         // Shipping zone
-        $shippingZones    = ShippingZone::active()->orderBy('name')->get();
-        $selectedZoneId   = session()->get('shipping_zone_id');
-        $selectedZone     = $selectedZoneId ? ShippingZone::find($selectedZoneId) : null;
-        $shippingCost     = $selectedZone ? (float) $selectedZone->cost : 0;
+        $shippingZones = ShippingZone::active()->orderBy('name')->get();
+        $selectedZoneId = session()->get('shipping_zone_id');
+        $selectedZone = $selectedZoneId ? ShippingZone::find($selectedZoneId) : null;
+        $shippingCost = $selectedZone ? (float) $selectedZone->cost : 0;
 
         // Voucher
-        $voucher  = null;
+        $voucher = null;
         $discount = 0;
-        
+
         if (session()->has('voucher')) {
             $voucherCode = session()->get('voucher');
-            $voucher = \App\Models\Voucher::where('code', $voucherCode)->first();
-            
+            $voucher = Voucher::where('code', $voucherCode)->first();
+
             if ($voucher && $voucher->isValidForAmount($subtotal)) {
                 $discount = $voucher->calculateDiscount($subtotal);
             } else {
@@ -116,32 +121,32 @@ class CartController extends Controller
         $vouchers = collect();
         if (auth()->check()) {
             $user = auth()->user();
-            $rankKeys = array_keys(\App\Models\User::$ranks);
+            $rankKeys = array_keys(User::$ranks);
             $userRankIndex = array_search($user->rank ?? 'reguler', $rankKeys);
             $eligibleRanks = array_slice($rankKeys, 0, $userRankIndex + 1);
 
-            $vouchers = \App\Models\Voucher::where('is_active', true)
+            $vouchers = Voucher::where('is_active', true)
                 ->where('is_hidden', false)
-                ->where(function($q) {
+                ->where(function ($q) {
                     $q->whereNull('expires_at')
-                      ->orWhere('expires_at', '>', now());
+                        ->orWhere('expires_at', '>', now());
                 })
-                ->where(function($q) use ($eligibleRanks) {
+                ->where(function ($q) use ($eligibleRanks) {
                     $q->whereNull('rank')
-                      ->orWhereIn('rank', $eligibleRanks);
+                        ->orWhereIn('rank', $eligibleRanks);
                 })
-                ->where(function($q) use ($user) {
+                ->where(function ($q) use ($user) {
                     $q->whereNull('user_id')
-                      ->orWhere('user_id', $user->id);
+                        ->orWhere('user_id', $user->id);
                 })
                 ->latest()
                 ->get();
         } else {
-            $vouchers = \App\Models\Voucher::where('is_active', true)
+            $vouchers = Voucher::where('is_active', true)
                 ->where('is_hidden', false)
-                ->where(function($q) {
+                ->where(function ($q) {
                     $q->whereNull('expires_at')
-                      ->orWhere('expires_at', '>', now());
+                        ->orWhere('expires_at', '>', now());
                 })
                 ->whereNull('rank')
                 ->whereNull('user_id')
@@ -169,6 +174,7 @@ class CartController extends Controller
                     }
                 }
             }
+
             return true;
         });
 
@@ -187,6 +193,7 @@ class CartController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => "Maaf, stok \"{$product->name}\" sudah habis."], 422);
             }
+
             return redirect()->back()->with('error', "Maaf, stok \"{$product->name}\" sudah habis.");
         }
 
@@ -199,28 +206,29 @@ class CartController extends Controller
 
         // Hitung total extra dari opsi
         $extraPrice = 0;
-        
+
         // Spiciness price
-        if ($selectedOptions['spiciness_level'] && !empty($product->spiciness_levels)) {
-            $spicinessObj = collect($product->spiciness_levels)->first(function($level) use ($selectedOptions) {
+        if ($selectedOptions['spiciness_level'] && ! empty($product->spiciness_levels)) {
+            $spicinessObj = collect($product->spiciness_levels)->first(function ($level) use ($selectedOptions) {
                 $levelName = is_array($level) ? ($level['name'] ?? '') : $level;
+
                 return $levelName === $selectedOptions['spiciness_level'];
             });
             if ($spicinessObj && is_array($spicinessObj)) {
                 $extraPrice += (float) ($spicinessObj['price'] ?? 0);
             }
         }
-        
+
         // Sauce price
-        if ($selectedOptions['sauce'] && !empty($product->sauces)) {
+        if ($selectedOptions['sauce'] && ! empty($product->sauces)) {
             $sauceObj = collect($product->sauces)->firstWhere('name', $selectedOptions['sauce']);
             if ($sauceObj) {
                 $extraPrice += (float) ($sauceObj['price'] ?? 0);
             }
         }
-        
+
         // Toppings price
-        if (!empty($selectedOptions['toppings']) && !empty($product->toppings)) {
+        if (! empty($selectedOptions['toppings']) && ! empty($product->toppings)) {
             foreach ($selectedOptions['toppings'] as $topName) {
                 $topObj = collect($product->toppings)->firstWhere('name', $topName);
                 if ($topObj) {
@@ -230,7 +238,7 @@ class CartController extends Controller
         }
 
         // Additionals price
-        if (!empty($selectedOptions['additionals']) && !empty($product->additionals)) {
+        if (! empty($selectedOptions['additionals']) && ! empty($product->additionals)) {
             foreach ($selectedOptions['additionals'] as $addName) {
                 $addObj = collect($product->additionals)->firstWhere('name', $addName);
                 if ($addObj) {
@@ -240,12 +248,12 @@ class CartController extends Controller
         }
 
         $itemPrice = (float) $product->selling_price + $extraPrice;
-        $hasOptions = !empty($selectedOptions['spiciness_level']) ||
-                      !empty($selectedOptions['sauce']) ||
-                      !empty($selectedOptions['toppings']) ||
-                      !empty($selectedOptions['additionals']);
-                      
-        $cartKey = $hasOptions ? ($product->id . '_' . md5(serialize($selectedOptions))) : $product->id;
+        $hasOptions = ! empty($selectedOptions['spiciness_level']) ||
+                      ! empty($selectedOptions['sauce']) ||
+                      ! empty($selectedOptions['toppings']) ||
+                      ! empty($selectedOptions['additionals']);
+
+        $cartKey = $hasOptions ? ($product->id.'_'.md5(serialize($selectedOptions))) : $product->id;
 
         $cart = session()->get('cart', []);
         $currentQty = collect($cart)->where('product_id', $product->id)->sum('quantity');
@@ -255,21 +263,22 @@ class CartController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => "Stok \"{$product->name}\" tidak mencukupi. Tersisa {$product->stock} item."], 422);
             }
+
             return redirect()->back()->with('error', "Stok \"{$product->name}\" tidak mencukupi. Tersisa {$product->stock} item.");
         }
 
-        if(isset($cart[$cartKey])) {
+        if (isset($cart[$cartKey])) {
             $cart[$cartKey]['quantity']++;
         } else {
             $cart[$cartKey] = [
-                "product_id" => $product->id,
-                "name"       => $product->name,
-                "quantity"   => 1,
-                "price"      => $itemPrice,
-                "image"      => $product->image,
-                "stock"      => $product->stock,
-                "category"   => $product->category->name,
-                "options"    => $selectedOptions,
+                'product_id' => $product->id,
+                'name' => $product->name,
+                'quantity' => 1,
+                'price' => $itemPrice,
+                'image' => $product->image,
+                'stock' => $product->stock,
+                'category' => $product->category->name,
+                'options' => $selectedOptions,
             ];
         }
 
@@ -278,8 +287,8 @@ class CartController extends Controller
 
         if ($request->ajax()) {
             return response()->json([
-                'success'    => true,
-                'message'    => "Produk berhasil ditambahkan ke keranjang!",
+                'success' => true,
+                'message' => 'Produk berhasil ditambahkan ke keranjang!',
                 'cart_count' => $cartCount,
             ]);
         }
@@ -292,96 +301,104 @@ class CartController extends Controller
      */
     public function update(Request $request)
     {
-        if($request->id && isset($request->quantity)){
+        if ($request->id && isset($request->quantity)) {
             $cart = session()->get('cart');
             if (isset($cart[$request->id])) {
-                $productId = $cart[$request->id]['product_id'] ?? (is_numeric($request->id) ? (int)$request->id : null);
+                $productId = $cart[$request->id]['product_id'] ?? (is_numeric($request->id) ? (int) $request->id : null);
                 $product = Product::find($productId);
-                
+
                 // Hitung jumlah produk ini di keranjang dari item lain
                 $otherQty = collect($cart)
                     ->forget($request->id)
-                    ->filter(fn($item, $key) => ($item['product_id'] ?? (is_numeric($key) ? (int)$key : null)) == $productId)
+                    ->filter(fn ($item, $key) => ($item['product_id'] ?? (is_numeric($key) ? (int) $key : null)) == $productId)
                     ->sum('quantity');
 
                 if ($product && $product->stock !== null && ($otherQty + $request->quantity) > $product->stock) {
                     if ($request->ajax() || $request->wantsJson()) {
                         return response()->json([
                             'success' => false,
-                            'message' => "Stok \"{$product->name}\" tidak mencukupi. Tersisa {$product->stock} item."
+                            'message' => "Stok \"{$product->name}\" tidak mencukupi. Tersisa {$product->stock} item.",
                         ], 422);
                     }
+
                     return redirect()->back()->with('error', "Stok \"{$product->name}\" tidak mencukupi.");
                 }
 
-                $cart[$request->id]["quantity"] = max(1, (int)$request->quantity);
+                $cart[$request->id]['quantity'] = max(1, (int) $request->quantity);
                 session()->put('cart', $cart);
             }
         }
         if ($request->ajax() || $request->wantsJson()) {
-            $cart     = session()->get('cart', []);
+            $cart = session()->get('cart', []);
             $subtotal = 0;
             $originalSubtotal = 0;
             $productDiscount = 0;
             $totalQty = 0;
 
-            if (!empty($cart)) {
+            if (! empty($cart)) {
                 $productIds = collect($cart)->map(function ($item, $key) {
-                    return $item['product_id'] ?? (is_numeric($key) ? (int)$key : null);
+                    return $item['product_id'] ?? (is_numeric($key) ? (int) $key : null);
                 })->filter()->unique()->toArray();
                 $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
                 foreach ($cart as $cartKey => $item) {
                     $totalQty += $item['quantity'];
-                    $pId = $item['product_id'] ?? (is_numeric($cartKey) ? (int)$cartKey : null);
+                    $pId = $item['product_id'] ?? (is_numeric($cartKey) ? (int) $cartKey : null);
                     $product = $products->get($pId);
                     if ($product) {
                         $qty = $item['quantity'];
-                        
+
                         // Hitung total extra dari opsi
                         $extraPrice = 0;
                         $options = $item['options'] ?? [];
-                        
+
                         // Spiciness extra price
-                        if (!empty($options['spiciness_level']) && !empty($product->spiciness_levels)) {
-                            $spicinessObj = collect($product->spiciness_levels)->first(function($level) use ($options) {
+                        if (! empty($options['spiciness_level']) && ! empty($product->spiciness_levels)) {
+                            $spicinessObj = collect($product->spiciness_levels)->first(function ($level) use ($options) {
                                 $levelName = is_array($level) ? ($level['name'] ?? '') : $level;
+
                                 return $levelName === $options['spiciness_level'];
                             });
                             if ($spicinessObj && is_array($spicinessObj)) {
                                 $extraPrice += (float) ($spicinessObj['price'] ?? 0);
                             }
                         }
-                        
+
                         // Sauce
-                        if (!empty($options['sauce']) && !empty($product->sauces)) {
+                        if (! empty($options['sauce']) && ! empty($product->sauces)) {
                             $sauceObj = collect($product->sauces)->firstWhere('name', $options['sauce']);
-                            if ($sauceObj) $extraPrice += (float) ($sauceObj['price'] ?? 0);
-                        }
-                        
-                        // Toppings
-                        if (!empty($options['toppings']) && !empty($product->toppings)) {
-                            foreach ($options['toppings'] as $topName) {
-                                $topObj = collect($product->toppings)->firstWhere('name', $topName);
-                                if ($topObj) $extraPrice += (float) ($topObj['price'] ?? 0);
+                            if ($sauceObj) {
+                                $extraPrice += (float) ($sauceObj['price'] ?? 0);
                             }
                         }
-                        
+
+                        // Toppings
+                        if (! empty($options['toppings']) && ! empty($product->toppings)) {
+                            foreach ($options['toppings'] as $topName) {
+                                $topObj = collect($product->toppings)->firstWhere('name', $topName);
+                                if ($topObj) {
+                                    $extraPrice += (float) ($topObj['price'] ?? 0);
+                                }
+                            }
+                        }
+
                         // Additionals
-                        if (!empty($options['additionals']) && !empty($product->additionals)) {
+                        if (! empty($options['additionals']) && ! empty($product->additionals)) {
                             foreach ($options['additionals'] as $addName) {
                                 $addObj = collect($product->additionals)->firstWhere('name', $addName);
-                                if ($addObj) $extraPrice += (float) ($addObj['price'] ?? 0);
+                                if ($addObj) {
+                                    $extraPrice += (float) ($addObj['price'] ?? 0);
+                                }
                             }
                         }
 
                         $originalPrice = (float) $product->price + $extraPrice;
                         $sellingPrice = (float) $product->selling_price + $extraPrice;
-                        
+
                         $originalSubtotal += $originalPrice * $qty;
                         $subtotal += $sellingPrice * $qty;
-                        
+
                         if ($product->hasDiscount()) {
-                            $productDiscount += ((float)$product->price - (float)$product->selling_price) * $qty;
+                            $productDiscount += ((float) $product->price - (float) $product->selling_price) * $qty;
                         }
                     } else {
                         $subtotal += $item['price'] * $item['quantity'];
@@ -392,20 +409,20 @@ class CartController extends Controller
 
             // Shipping
             $selectedZoneId = session()->get('shipping_zone_id');
-            $selectedZone   = $selectedZoneId ? ShippingZone::find($selectedZoneId) : null;
-            $shippingCost   = $selectedZone ? (float) $selectedZone->cost : 0;
+            $selectedZone = $selectedZoneId ? ShippingZone::find($selectedZoneId) : null;
+            $shippingCost = $selectedZone ? (float) $selectedZone->cost : 0;
 
             // Voucher
-            $discount       = 0;
+            $discount = 0;
             $voucherApplied = false;
-            $voucherCode    = '';
-            
+            $voucherCode = '';
+
             if (session()->has('voucher')) {
-                $voucher = \App\Models\Voucher::where('code', session()->get('voucher'))->first();
+                $voucher = Voucher::where('code', session()->get('voucher'))->first();
                 if ($voucher && $voucher->isValidForAmount($subtotal)) {
-                    $discount       = $voucher->calculateDiscount($subtotal);
+                    $discount = $voucher->calculateDiscount($subtotal);
                     $voucherApplied = true;
-                    $voucherCode    = $voucher->code;
+                    $voucherCode = $voucher->code;
                 } else {
                     session()->forget('voucher');
                 }
@@ -413,25 +430,25 @@ class CartController extends Controller
 
             $finalTotal = $subtotal - $discount + $shippingCost;
 
-             return response()->json([
-                'success'              => true,
-                'subtotal'             => $originalSubtotal,
-                'subtotal_formatted'   => 'Rp ' . number_format($originalSubtotal, 0, ',', '.'),
-                'total'                => $originalSubtotal,
-                'total_formatted'      => 'Rp ' . number_format($originalSubtotal, 0, ',', '.'),
-                'product_discount'     => $productDiscount,
-                'product_discount_formatted' => 'Rp ' . number_format($productDiscount, 0, ',', '.'),
-                'total_qty'            => $totalQty,
-                'quantity'             => isset($cart[$request->id]) ? $cart[$request->id]['quantity'] : 0,
-                'voucher_applied'      => $voucherApplied,
-                'voucher_code'         => $voucherCode,
-                'voucher_name'         => $voucherApplied && isset($voucher) ? $voucher->name : '',
-                'discount'             => $discount,
-                'discount_formatted'   => 'Rp ' . number_format($discount, 0, ',', '.'),
-                'shipping_cost'        => $shippingCost,
-                'shipping_formatted'   => 'Rp ' . number_format($shippingCost, 0, ',', '.'),
-                'final_total'          => $finalTotal,
-                'final_total_formatted'=> 'Rp ' . number_format($finalTotal, 0, ',', '.'),
+            return response()->json([
+                'success' => true,
+                'subtotal' => $originalSubtotal,
+                'subtotal_formatted' => 'Rp '.number_format($originalSubtotal, 0, ',', '.'),
+                'total' => $originalSubtotal,
+                'total_formatted' => 'Rp '.number_format($originalSubtotal, 0, ',', '.'),
+                'product_discount' => $productDiscount,
+                'product_discount_formatted' => 'Rp '.number_format($productDiscount, 0, ',', '.'),
+                'total_qty' => $totalQty,
+                'quantity' => isset($cart[$request->id]) ? $cart[$request->id]['quantity'] : 0,
+                'voucher_applied' => $voucherApplied,
+                'voucher_code' => $voucherCode,
+                'voucher_name' => $voucherApplied && isset($voucher) ? $voucher->name : '',
+                'discount' => $discount,
+                'discount_formatted' => 'Rp '.number_format($discount, 0, ',', '.'),
+                'shipping_cost' => $shippingCost,
+                'shipping_formatted' => 'Rp '.number_format($shippingCost, 0, ',', '.'),
+                'final_total' => $finalTotal,
+                'final_total_formatted' => 'Rp '.number_format($finalTotal, 0, ',', '.'),
             ]);
         }
 
@@ -445,55 +462,56 @@ class CartController extends Controller
     {
         $zoneId = $request->input('zone_id');
 
-        if (!$zoneId) {
+        if (! $zoneId) {
             session()->forget('shipping_zone_id');
-            $cart     = session()->get('cart', []);
+            $cart = session()->get('cart', []);
             $subtotal = array_reduce($cart, fn ($c, $i) => $c + ($i['price'] * $i['quantity']), 0);
             $discount = 0;
             if (session()->has('voucher')) {
-                $voucher = \App\Models\Voucher::where('code', session()->get('voucher'))->first();
+                $voucher = Voucher::where('code', session()->get('voucher'))->first();
                 if ($voucher && $voucher->isValidForAmount($subtotal)) {
                     $discount = $voucher->calculateDiscount($subtotal);
                 }
             }
+
             return response()->json([
-                'success'              => true,
-                'shipping_cost'        => 0,
-                'shipping_formatted'   => 'Gratis',
-                'final_total'          => $subtotal - $discount,
-                'final_total_formatted'=> 'Rp ' . number_format($subtotal - $discount, 0, ',', '.'),
+                'success' => true,
+                'shipping_cost' => 0,
+                'shipping_formatted' => 'Gratis',
+                'final_total' => $subtotal - $discount,
+                'final_total_formatted' => 'Rp '.number_format($subtotal - $discount, 0, ',', '.'),
             ]);
         }
 
         $zone = ShippingZone::where('id', $zoneId)->where('is_active', true)->first();
 
-        if (!$zone) {
+        if (! $zone) {
             return response()->json(['success' => false, 'message' => 'Wilayah tidak ditemukan.'], 422);
         }
 
         session()->put('shipping_zone_id', $zone->id);
 
-        $cart     = session()->get('cart', []);
+        $cart = session()->get('cart', []);
         $subtotal = array_reduce($cart, fn ($c, $i) => $c + ($i['price'] * $i['quantity']), 0);
         $discount = 0;
 
         if (session()->has('voucher')) {
-            $voucher = \App\Models\Voucher::where('code', session()->get('voucher'))->first();
+            $voucher = Voucher::where('code', session()->get('voucher'))->first();
             if ($voucher && $voucher->isValidForAmount($subtotal)) {
                 $discount = $voucher->calculateDiscount($subtotal);
             }
         }
 
         $shippingCost = (float) $zone->cost;
-        $finalTotal   = $subtotal - $discount + $shippingCost;
+        $finalTotal = $subtotal - $discount + $shippingCost;
 
         return response()->json([
-            'success'              => true,
-            'zone_name'            => $zone->name,
-            'shipping_cost'        => $shippingCost,
-            'shipping_formatted'   => 'Rp ' . number_format($shippingCost, 0, ',', '.'),
-            'final_total'          => $finalTotal,
-            'final_total_formatted'=> 'Rp ' . number_format($finalTotal, 0, ',', '.'),
+            'success' => true,
+            'zone_name' => $zone->name,
+            'shipping_cost' => $shippingCost,
+            'shipping_formatted' => 'Rp '.number_format($shippingCost, 0, ',', '.'),
+            'final_total' => $finalTotal,
+            'final_total_formatted' => 'Rp '.number_format($finalTotal, 0, ',', '.'),
         ]);
     }
 
@@ -502,13 +520,14 @@ class CartController extends Controller
      */
     public function remove(Request $request)
     {
-        if($request->id) {
+        if ($request->id) {
             $cart = session()->get('cart');
-            if(isset($cart[$request->id])) {
+            if (isset($cart[$request->id])) {
                 unset($cart[$request->id]);
                 session()->put('cart', $cart);
             }
         }
+
         return redirect()->back();
     }
 
@@ -517,7 +536,7 @@ class CartController extends Controller
      */
     public function checkout(Request $request)
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu untuk melakukan pemesanan.');
         }
 
@@ -530,7 +549,7 @@ class CartController extends Controller
         ]);
 
         $cart = session()->get('cart', []);
-        
+
         if (empty($cart)) {
             return redirect()->back()->with('error', 'Keranjang Anda kosong!');
         }
@@ -541,64 +560,62 @@ class CartController extends Controller
         }
 
         // Shipping zone
-        $selectedZoneId  = session()->get('shipping_zone_id');
-        $selectedZone    = $selectedZoneId ? ShippingZone::find($selectedZoneId) : null;
-        $shippingCost    = $selectedZone ? (float) $selectedZone->cost : 0;
-        $shippingZoneName= $selectedZone ? $selectedZone->name : null;
+        $selectedZoneId = session()->get('shipping_zone_id');
+        $selectedZone = $selectedZoneId ? ShippingZone::find($selectedZoneId) : null;
+        $shippingCost = $selectedZone ? (float) $selectedZone->cost : 0;
+        $shippingZoneName = $selectedZone ? $selectedZone->name : null;
 
         // Apply voucher if any
         $voucherCode = null;
-        $discount    = 0;
-        
+        $discount = 0;
+
         if (session()->has('voucher')) {
-            $voucher = \App\Models\Voucher::where('code', session()->get('voucher'))->first();
+            $voucher = Voucher::where('code', session()->get('voucher'))->first();
             if ($voucher && $voucher->isValidForAmount($subtotal)) {
                 $voucherCode = $voucher->code;
-                $discount    = $voucher->calculateDiscount($subtotal);
+                $discount = $voucher->calculateDiscount($subtotal);
             }
         }
 
         // Siapkan data items untuk disimpan ke order
         $items = [];
         foreach ($cart as $cartKey => $item) {
-            $productId = $item['product_id'] ?? (is_numeric($cartKey) ? (int)$cartKey : null);
+            $productId = $item['product_id'] ?? (is_numeric($cartKey) ? (int) $cartKey : null);
             $items[] = [
                 'product_id' => $productId,
-                'name'       => $item['name'],
-                'quantity'   => $item['quantity'],
-                'price'      => $item['price'],
-                'options'    => $item['options'] ?? null,
+                'name' => $item['name'],
+                'quantity' => $item['quantity'],
+                'price' => $item['price'],
+                'options' => $item['options'] ?? null,
             ];
         }
 
         $totalAmount = $subtotal - $discount + $shippingCost;
 
-        $order = \App\Models\Order::create([
-            'user_id'           => auth()->id(),
-            'customer_name'     => $request->customer_name,
-            'customer_phone'    => $request->customer_phone,
-            'shipping_address'  => $request->shipping_address,
-            'notes'             => $request->notes,
-            'shipping_zone_name'=> $shippingZoneName,
-            'shipping_cost'     => $shippingCost,
-            'payment_method'    => $request->payment_method ?? 'transfer_bank',
-            'voucher_code'      => $voucherCode,
-            'discount_amount'   => $discount,
-            'total_amount'      => $totalAmount,
-            'status'            => 'pending',
-            'items'             => $items,
-            'stock_deducted'    => false,
+        $order = Order::create([
+            'user_id' => auth()->id(),
+            'customer_name' => $request->customer_name,
+            'customer_phone' => $request->customer_phone,
+            'shipping_address' => $request->shipping_address,
+            'notes' => $request->notes,
+            'shipping_zone_name' => $shippingZoneName,
+            'shipping_cost' => $shippingCost,
+            'payment_method' => $request->payment_method ?? 'transfer_bank',
+            'voucher_code' => $voucherCode,
+            'discount_amount' => $discount,
+            'total_amount' => $totalAmount,
+            'status' => 'pending',
+            'items' => $items,
+            'stock_deducted' => false,
         ]);
 
         // Increment sales_count for each product
         foreach ($cart as $cartKey => $item) {
-            $productId = $item['product_id'] ?? (is_numeric($cartKey) ? (int)$cartKey : null);
+            $productId = $item['product_id'] ?? (is_numeric($cartKey) ? (int) $cartKey : null);
             if ($productId) {
-                \App\Models\Product::where('id', $productId)->increment('sales_count', $item['quantity']);
+                Product::where('id', $productId)->increment('sales_count', $item['quantity']);
             }
         }
-
-
 
         session()->forget('cart');
         session()->forget('voucher');
@@ -607,10 +624,12 @@ class CartController extends Controller
         return redirect()->route('cart.success', $order);
     }
 
-    public function success(\App\Models\Order $order)
+    public function success(Order $order)
     {
         abort_if($order->user_id != auth()->id(), 403);
-        return view('cart.success', compact('order'));
+        $snapToken = MidtransService::getSnapToken($order);
+
+        return view('cart.success', compact('order', 'snapToken'));
     }
 
     /**
@@ -618,23 +637,23 @@ class CartController extends Controller
      */
     public function applyVoucher(Request $request)
     {
-        $code    = strtoupper($request->voucher_code);
-        $voucher = \App\Models\Voucher::where('code', $code)->first();
+        $code = strtoupper($request->voucher_code);
+        $voucher = Voucher::where('code', $code)->first();
 
-        if (!$voucher) {
+        if (! $voucher) {
             return response()->json([
                 'success' => false,
-                'message' => 'Kode voucher tidak ditemukan.'
+                'message' => 'Kode voucher tidak ditemukan.',
             ], 422);
         }
 
-        $cart     = session()->get('cart', []);
+        $cart = session()->get('cart', []);
         $subtotal = 0;
         foreach ($cart as $item) {
             $subtotal += $item['price'] * $item['quantity'];
         }
 
-        if (!$voucher->isValidForAmount($subtotal)) {
+        if (! $voucher->isValidForAmount($subtotal)) {
             $limitPerUser = $voucher->limit_per_user;
             if ($limitPerUser === null && (str_starts_with($voucher->code, 'BARU-') || $voucher->user_id !== null)) {
                 $limitPerUser = 1;
@@ -646,11 +665,11 @@ class CartController extends Controller
             } elseif ($subtotal < $voucher->min_order_amount) {
                 $errorMsg = 'Kamu belum memenuhi minimum transaksi voucher ini. Cek S&K';
             } elseif ($voucher->rank !== null) {
-                if (!auth()->check()) {
+                if (! auth()->check()) {
                     $errorMsg = 'Silakan login terlebih dahulu untuk menggunakan voucher ini. Cek S&K';
                 } else {
-                    $rankLabel = \App\Models\User::$ranks[$voucher->rank]['label'] ?? $voucher->rank;
-                    $errorMsg = "Pangkat loyalitas kamu belum memenuhi syarat untuk menggunakan voucher ini. Cek S&K";
+                    $rankLabel = User::$ranks[$voucher->rank]['label'] ?? $voucher->rank;
+                    $errorMsg = 'Pangkat loyalitas kamu belum memenuhi syarat untuk menggunakan voucher ini. Cek S&K';
                 }
             } elseif ($voucher->usage_limit !== null && $voucher->orders()->count() >= $voucher->usage_limit) {
                 $errorMsg = 'Batas maksimal penggunaan voucher ini sudah habis. Cek S&K';
@@ -662,7 +681,7 @@ class CartController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => $errorMsg
+                'message' => $errorMsg,
             ], 422);
         }
 
@@ -671,19 +690,19 @@ class CartController extends Controller
 
         // Include shipping in final total
         $selectedZoneId = session()->get('shipping_zone_id');
-        $selectedZone   = $selectedZoneId ? ShippingZone::find($selectedZoneId) : null;
-        $shippingCost   = $selectedZone ? (float) $selectedZone->cost : 0;
-        $finalTotal     = $subtotal - $discount + $shippingCost;
+        $selectedZone = $selectedZoneId ? ShippingZone::find($selectedZoneId) : null;
+        $shippingCost = $selectedZone ? (float) $selectedZone->cost : 0;
+        $finalTotal = $subtotal - $discount + $shippingCost;
 
         return response()->json([
-            'success'              => true,
-            'message'              => 'Voucher berhasil digunakan!',
-            'voucher_code'         => $voucher->code,
-            'voucher_name'         => $voucher->name,
-            'discount'             => $discount,
-            'discount_formatted'   => 'Rp ' . number_format($discount, 0, ',', '.'),
-            'final_total'          => $finalTotal,
-            'final_total_formatted'=> 'Rp ' . number_format($finalTotal, 0, ',', '.'),
+            'success' => true,
+            'message' => 'Voucher berhasil digunakan!',
+            'voucher_code' => $voucher->code,
+            'voucher_name' => $voucher->name,
+            'discount' => $discount,
+            'discount_formatted' => 'Rp '.number_format($discount, 0, ',', '.'),
+            'final_total' => $finalTotal,
+            'final_total_formatted' => 'Rp '.number_format($finalTotal, 0, ',', '.'),
         ]);
     }
 
@@ -694,27 +713,27 @@ class CartController extends Controller
     {
         session()->forget('voucher');
 
-        $cart     = session()->get('cart', []);
+        $cart = session()->get('cart', []);
         $subtotal = 0;
         foreach ($cart as $item) {
             $subtotal += $item['price'] * $item['quantity'];
         }
 
         $selectedZoneId = session()->get('shipping_zone_id');
-        $selectedZone   = $selectedZoneId ? ShippingZone::find($selectedZoneId) : null;
-        $shippingCost   = $selectedZone ? (float) $selectedZone->cost : 0;
-        $finalTotal     = $subtotal + $shippingCost;
+        $selectedZone = $selectedZoneId ? ShippingZone::find($selectedZoneId) : null;
+        $shippingCost = $selectedZone ? (float) $selectedZone->cost : 0;
+        $finalTotal = $subtotal + $shippingCost;
 
         return response()->json([
-            'success'              => true,
-            'message'              => 'Voucher berhasil dihapus.',
-            'subtotal'             => $subtotal,
-            'total'                => $subtotal,
-            'total_formatted'      => 'Rp ' . number_format($subtotal, 0, ',', '.'),
-            'shipping_cost'        => $shippingCost,
-            'shipping_formatted'   => $shippingCost > 0 ? 'Rp ' . number_format($shippingCost, 0, ',', '.') : 'Gratis',
-            'final_total'          => $finalTotal,
-            'final_total_formatted'=> 'Rp ' . number_format($finalTotal, 0, ',', '.'),
+            'success' => true,
+            'message' => 'Voucher berhasil dihapus.',
+            'subtotal' => $subtotal,
+            'total' => $subtotal,
+            'total_formatted' => 'Rp '.number_format($subtotal, 0, ',', '.'),
+            'shipping_cost' => $shippingCost,
+            'shipping_formatted' => $shippingCost > 0 ? 'Rp '.number_format($shippingCost, 0, ',', '.') : 'Gratis',
+            'final_total' => $finalTotal,
+            'final_total_formatted' => 'Rp '.number_format($finalTotal, 0, ',', '.'),
         ]);
     }
 }

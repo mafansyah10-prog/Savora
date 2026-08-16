@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use App\Models\User;
+use App\Models\Voucher;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -42,16 +45,16 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        if (\App\Models\Setting::getGlobal()->new_user_voucher_is_active) {
-            $setting = \App\Models\Setting::getGlobal();
-            \App\Models\Voucher::create([
-                'code' => 'BARU-' . strtoupper(\Illuminate\Support\Str::random(6)),
+        if (Setting::getGlobal()->new_user_voucher_is_active) {
+            $setting = Setting::getGlobal();
+            Voucher::create([
+                'code' => 'BARU-'.strtoupper(Str::random(6)),
                 'type' => $setting->new_user_voucher_type ?? 'fixed',
                 'value' => $setting->new_user_voucher_value ?? 10000,
                 'min_order_amount' => $setting->new_user_voucher_min_order_amount ?? 0,
                 'is_active' => true,
                 'is_hidden' => false,
-                'expires_at' => now()->addDays((int)($setting->new_user_voucher_expires_in_days ?? 30)),
+                'expires_at' => now()->addDays((int) ($setting->new_user_voucher_expires_in_days ?? 30)),
                 'user_id' => $user->id,
                 'usage_limit' => 1,
                 'limit_per_user' => $setting->new_user_voucher_limit_per_user ?? 1,

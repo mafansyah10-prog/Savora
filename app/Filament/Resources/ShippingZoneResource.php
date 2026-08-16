@@ -11,7 +11,6 @@ use App\Models\ShippingZone;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
 class ShippingZoneResource extends Resource
@@ -50,9 +49,9 @@ class ShippingZoneResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => ListShippingZones::route('/'),
+            'index' => ListShippingZones::route('/'),
             'create' => CreateShippingZone::route('/create'),
-            'edit'   => EditShippingZone::route('/{record}/edit'),
+            'edit' => EditShippingZone::route('/{record}/edit'),
         ];
     }
 }

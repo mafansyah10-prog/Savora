@@ -17,7 +17,7 @@ return new class extends Migration
         });
 
         // Set the existing admin user
-        \DB::table('users')
+        DB::table('users')
             ->where('email', 'admin@gmail.com')
             ->update([
                 'role' => 'admin',

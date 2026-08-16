@@ -2,10 +2,10 @@
 
 namespace App\Filament\Pages;
 
-use Filament\Pages\Dashboard as BaseDashboard;
-use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
+use Filament\Pages\Dashboard as BaseDashboard;
+use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -44,12 +44,8 @@ class Dashboard extends BaseDashboard
             ->columns(3);
     }
 
-    public function getColumns(): int | array
+    public function getColumns(): int|array
     {
         return 3;
     }
 }
-
-
-
-

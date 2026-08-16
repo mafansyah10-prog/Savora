@@ -9,10 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            if (!Schema::hasColumn('orders', 'shipping_zone_name')) {
+            if (! Schema::hasColumn('orders', 'shipping_zone_name')) {
                 $table->string('shipping_zone_name')->nullable()->after('shipping_address');
             }
-            if (!Schema::hasColumn('orders', 'shipping_cost')) {
+            if (! Schema::hasColumn('orders', 'shipping_cost')) {
                 $table->decimal('shipping_cost', 15, 2)->default(0)->after('shipping_zone_name');
             }
         });

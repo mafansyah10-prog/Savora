@@ -3,10 +3,12 @@
 namespace App\Filament\Resources\Vouchers\Tables;
 
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
 class VouchersTable
@@ -29,14 +31,14 @@ class VouchersTable
 
                 TextColumn::make('value')
                     ->label('Nilai Potongan')
-                    ->formatStateUsing(fn ($record) => $record->type === 'percent' 
-                        ? number_format($record->value, 0) . '%' 
-                        : 'Rp ' . number_format($record->value, 0, ',', '.'))
+                    ->formatStateUsing(fn ($record) => $record->type === 'percent'
+                        ? number_format($record->value, 0).'%'
+                        : 'Rp '.number_format($record->value, 0, ',', '.'))
                     ->sortable(),
 
                 TextColumn::make('min_order_amount')
                     ->label('Min. Belanja')
-                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ',', '.'))
+                    ->formatStateUsing(fn ($state) => 'Rp '.number_format($state, 0, ',', '.'))
                     ->sortable(),
 
                 TextColumn::make('rank')
@@ -44,21 +46,21 @@ class VouchersTable
                     ->badge()
                     ->formatStateUsing(fn (?string $state): string => match ($state) {
                         'perunggu' => '🥉 Perunggu',
-                        'perak'    => '🥈 Perak',
-                        'emas'     => '🥇 Emas',
+                        'perak' => '🥈 Perak',
+                        'emas' => '🥇 Emas',
                         'platinum' => '💎 Platinum',
-                        'diamond'  => '👑 VIP Diamond',
-                        'reguler'  => '⚪ Reguler',
-                        default    => 'Semua Pangkat',
+                        'diamond' => '👑 VIP Diamond',
+                        'reguler' => '⚪ Reguler',
+                        default => 'Semua Pangkat',
                     })
                     ->color(fn (?string $state): string => match ($state) {
                         'perunggu' => 'warning',
-                        'perak'    => 'gray',
-                        'emas'     => 'warning',
+                        'perak' => 'gray',
+                        'emas' => 'warning',
                         'platinum' => 'info',
-                        'diamond'  => 'primary',
-                        'reguler'  => 'gray',
-                        default    => 'success',
+                        'diamond' => 'primary',
+                        'reguler' => 'gray',
+                        default => 'success',
                     })
                     ->sortable()
                     ->placeholder('Semua Pangkat'),
@@ -66,8 +68,8 @@ class VouchersTable
                 TextColumn::make('user.name')
                     ->label('Penerima Khusus')
                     ->badge()
-                    ->formatStateUsing(fn ($state, $record) => $record->user_id 
-                        ? ($record->user ? $record->user->name : 'User #' . $record->user_id) 
+                    ->formatStateUsing(fn ($state, $record) => $record->user_id
+                        ? ($record->user ? $record->user->name : 'User #'.$record->user_id)
                         : 'Umum (Semua Pelanggan)')
                     ->color(fn ($record) => $record->user_id ? 'warning' : 'success')
                     ->sortable(),
@@ -75,8 +77,8 @@ class VouchersTable
                 TextColumn::make('orders_count')
                     ->counts('orders')
                     ->label('Digunakan')
-                    ->formatStateUsing(fn ($record, $state) => $record->usage_limit 
-                        ? "{$state} / {$record->usage_limit}" 
+                    ->formatStateUsing(fn ($record, $state) => $record->usage_limit
+                        ? "{$state} / {$record->usage_limit}"
                         : "{$state}")
                     ->badge()
                     ->color('info')
@@ -99,7 +101,7 @@ class VouchersTable
                     ->sortable(),
             ])
             ->filters([
-                \Filament\Tables\Filters\TernaryFilter::make('is_personal')
+                TernaryFilter::make('is_personal')
                     ->label('Jenis Penerima')
                     ->placeholder('Semua Jenis')
                     ->trueLabel('Hanya Khusus Pengguna / Pengguna Baru')
@@ -111,7 +113,7 @@ class VouchersTable
             ])
             ->recordActions([
                 EditAction::make(),
-                \Filament\Actions\DeleteAction::make(),
+                DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

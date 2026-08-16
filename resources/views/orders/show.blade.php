@@ -12,6 +12,19 @@
         </a>
     </div>
 
+    @if(session('success'))
+        <div class="bg-brand-cyan/15 border border-brand-cyan/30 text-brand-cyan px-4 py-3 rounded-xl mb-5 text-sm flex items-center gap-2">
+            <i data-lucide="check-circle" class="w-4 h-4 flex-shrink-0"></i>
+            {{ session('success') }}
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="bg-red-500/15 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl mb-5 text-sm flex items-center gap-2">
+            <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0"></i>
+            {{ session('error') }}
+        </div>
+    @endif
+
     @php
         $statusLabels = [
             'pending'   => 'Menunggu Konfirmasi',
@@ -260,7 +273,25 @@
                     </div>
                 </div>
 
-                @if(\App\Models\Setting::getGlobal()->pakasir_is_active && in_array($order->payment_method, ['pakasir', 'bca', 'mandiri', 'qris']) && $order->status === 'pending')
+                @if(isset($snapToken) && $snapToken)
+                @php
+                    $setting = \App\Models\Setting::getGlobal();
+                @endphp
+                <div id="midtrans-payment-container" class="bg-brand-cyan/5 border border-brand-cyan/20 rounded-xl md:rounded-2xl p-4 md:p-5 space-y-4">
+                    <div class="flex items-center gap-2 text-brand-cyan">
+                        <i data-lucide="credit-card" class="w-4 h-4"></i>
+                        <p class="text-xs font-black uppercase tracking-wider">Menunggu Pembayaran Otomatis</p>
+                    </div>
+                    <p class="text-xs text-gray-400 leading-relaxed">
+                        Silakan selesaikan pembayaran Anda secara otomatis dengan aman menggunakan DANA, QRIS, E-Wallet, atau Transfer Bank. Nominal pembayaran akan terisi otomatis.
+                    </p>
+                    <button id="pay-button"
+                       class="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-brand-cyan to-teal-400 hover:from-teal-400 hover:to-brand-cyan text-[#0f1115] font-black text-xs uppercase tracking-widest rounded-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_6px_15px_rgba(78,205,196,0.3)] active:scale-95 text-center cursor-pointer">
+                        <i data-lucide="wallet" class="w-4 h-4"></i>
+                        Bayar Sekarang
+                    </button>
+                </div>
+                @elseif(\App\Models\Setting::getGlobal()->pakasir_is_active && !\App\Models\Setting::getGlobal()->manual_payment_is_active && in_array($order->payment_method, ['pakasir', 'bca', 'mandiri', 'qris']) && $order->status === 'pending')
                 @php
                     $setting = \App\Models\Setting::getGlobal();
                     $qrisOnlyParam = $order->payment_method === 'qris' ? '&qris_only=1' : '';
@@ -286,6 +317,50 @@
                         Simulasikan Pembayaran Sukses (Lokal)
                     </button>
                     @endif
+                </div>
+                @elseif($order->status === 'pending')
+                {{-- Manual Payment Instructions & Upload Form --}}
+                <div id="manual-payment-container" class="bg-[#16181d] border border-gray-800 rounded-xl md:rounded-2xl p-4 md:p-5 space-y-4">
+                    <div class="flex items-center gap-2 text-gold-400">
+                        <i data-lucide="landmark" class="w-4 h-4"></i>
+                        <p class="text-xs font-black uppercase tracking-wider">Instruksi Pembayaran Manual</p>
+                    </div>
+                    <p class="text-xs text-gray-400 leading-relaxed">
+                        Silakan lakukan pembayaran dengan mentransfer ke rekening bank kami atau memindai kode QRIS di bawah ini.
+                    </p>
+                    
+                    <div class="bg-black/25 border border-gray-850 rounded-xl p-4 space-y-2 text-xs">
+                        <p class="text-gray-400">Bank: <span class="text-white font-bold">{{ \App\Models\Setting::getGlobal()->bank_name }}</span></p>
+                        <p class="text-gray-400">No. Rekening: 
+                            <span class="text-white font-bold font-mono select-all">{{ \App\Models\Setting::getGlobal()->bank_account_number }}</span>
+                            <button onclick="copyBankNumber('{{ \App\Models\Setting::getGlobal()->bank_account_number }}')" class="ml-1 text-gold-500 hover:text-amber-400 text-[10px] font-bold uppercase transition">Salin</button>
+                        </p>
+                        <p class="text-gray-400">Atas Nama: <span class="text-white font-bold">{{ \App\Models\Setting::getGlobal()->bank_account_name }}</span></p>
+                    </div>
+
+                    @if(\App\Models\Setting::getGlobal()->qris_image)
+                    <div class="bg-black/25 border border-gray-850 rounded-xl p-4 flex flex-col items-center justify-center space-y-2">
+                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-wider">QRIS</p>
+                        <img src="{{ asset('storage/' . \App\Models\Setting::getGlobal()->qris_image) }}" alt="QRIS" class="w-32 h-32 object-contain rounded-lg border border-gray-800">
+                    </div>
+                    @endif
+
+                    <div class="border-t border-gray-850 pt-4 space-y-3">
+                        <div class="flex items-center gap-2 text-gold-400">
+                            <i data-lucide="upload" class="w-4 h-4"></i>
+                            <p class="text-xs font-black uppercase tracking-wider">Unggah Bukti Pembayaran</p>
+                        </div>
+                        <p class="text-[11px] text-gray-500">Unggah foto atau screenshot bukti transfer Anda untuk verifikasi AI otomatis.</p>
+                        
+                        <form action="{{ route('orders.upload_proof', $order) }}" method="POST" enctype="multipart/form-data" class="space-y-3">
+                            @csrf
+                            <input type="file" name="payment_proof" required accept="image/*"
+                                   class="block w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-black file:uppercase file:bg-gray-800 file:text-gold-500 hover:file:bg-gray-700 file:cursor-pointer bg-black/25 border border-gray-850 rounded-lg p-2">
+                            <button type="submit" class="w-full bg-gold-500 hover:bg-gold-600 text-black font-black text-xs py-3 rounded-lg transition active:scale-95 uppercase tracking-widest text-center cursor-pointer">
+                                Kirim & Verifikasi Pembayaran
+                            </button>
+                        </form>
+                    </div>
                 </div>
                 @endif
 
@@ -838,4 +913,38 @@
         });
     }
 </script>
+
+@if(isset($snapToken) && $snapToken)
+@php
+    $snapJsUrl = \App\Models\Setting::getGlobal()->midtrans_is_production 
+        ? 'https://app.midtrans.com/snap/snap.js' 
+        : 'https://app.sandbox.midtrans.com/snap/snap.js';
+    $clientKey = \App\Models\Setting::getGlobal()->midtrans_client_key ?: config('services.midtrans.client_key');
+@endphp
+<script src="{{ $snapJsUrl }}" data-client-key="{{ $clientKey }}"></script>
+<script>
+    const payButton = document.getElementById('pay-button');
+    if (payButton) {
+        payButton.addEventListener('click', function () {
+            window.snap.pay('{{ $snapToken }}', {
+                onSuccess: function(result){
+                    alert("Pembayaran berhasil!");
+                    window.location.reload();
+                },
+                onPending: function(result){
+                    alert("Menunggu pembayaran!");
+                    window.location.reload();
+                },
+                onError: function(result){
+                    alert("Pembayaran gagal!");
+                },
+                onClose: function(){
+                    alert('Anda menutup popup tanpa menyelesaikan pembayaran.');
+                }
+            });
+        });
+    }
+</script>
+@endif
+
 @endsection

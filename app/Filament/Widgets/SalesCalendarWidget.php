@@ -3,17 +3,19 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Order;
+use Carbon\Carbon;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-use Filament\Widgets\Concerns\InteractsWithPageFilters;
-use Carbon\Carbon;
 
 class SalesCalendarWidget extends BaseWidget
 {
     use InteractsWithPageFilters;
 
     protected static ?int $sort = 2;
-    protected int | string | array $columnSpan = 'full';
+
+    protected int|string|array $columnSpan = 'full';
+
     protected ?string $pollingInterval = '3s';
 
     protected function getStats(): array
@@ -24,7 +26,7 @@ class SalesCalendarWidget extends BaseWidget
 
         // Check if selected date is today
         $isToday = $selectedDate->isToday();
-        
+
         // Define labeling helper based on date
         if ($isToday) {
             $dayLabel = 'Hari Ini';
@@ -66,20 +68,20 @@ class SalesCalendarWidget extends BaseWidget
             ->count();
 
         return [
-            Stat::make("Penjualan {$dayLabel}", 'Rp ' . number_format($salesToday, 0, ',', '.'))
-                ->description($countToday . " transaksi sukses ({$dayLabel})")
+            Stat::make("Penjualan {$dayLabel}", 'Rp '.number_format($salesToday, 0, ',', '.'))
+                ->description($countToday." transaksi sukses ({$dayLabel})")
                 ->descriptionIcon('heroicon-m-calendar')
                 ->icon('heroicon-m-calendar')
                 ->color('success'),
 
-            Stat::make("Penjualan {$monthLabel}", 'Rp ' . number_format($salesMonth, 0, ',', '.'))
-                ->description($countMonth . " transaksi sukses ({$monthLabel})")
+            Stat::make("Penjualan {$monthLabel}", 'Rp '.number_format($salesMonth, 0, ',', '.'))
+                ->description($countMonth." transaksi sukses ({$monthLabel})")
                 ->descriptionIcon('heroicon-m-calendar-days')
                 ->icon('heroicon-m-calendar-days')
                 ->color('primary'),
 
-            Stat::make("Penjualan {$yearLabel}", 'Rp ' . number_format($salesYear, 0, ',', '.'))
-                ->description($countYear . " transaksi sukses ({$yearLabel})")
+            Stat::make("Penjualan {$yearLabel}", 'Rp '.number_format($salesYear, 0, ',', '.'))
+                ->description($countYear." transaksi sukses ({$yearLabel})")
                 ->descriptionIcon('heroicon-m-calendar')
                 ->icon('heroicon-m-calendar')
                 ->color('info'),

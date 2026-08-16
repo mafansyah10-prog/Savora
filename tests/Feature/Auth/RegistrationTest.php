@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\User;
+use App\Models\Voucher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -28,13 +30,13 @@ class RegistrationTest extends TestCase
         $this->assertAuthenticated();
         $response->assertRedirect(route('dashboard', absolute: false));
 
-        $user = \App\Models\User::where('email', 'test@example.com')->first();
+        $user = User::where('email', 'test@example.com')->first();
         $this->assertNotNull($user);
 
-        $voucher = \App\Models\Voucher::where('user_id', $user->id)->first();
+        $voucher = Voucher::where('user_id', $user->id)->first();
         $this->assertNotNull($voucher);
         $this->assertStringStartsWith('BARU-', $voucher->code);
         $this->assertEquals('fixed', $voucher->type);
-        $this->assertEquals(10000, (int)$voucher->value);
+        $this->assertEquals(10000, (int) $voucher->value);
     }
 }

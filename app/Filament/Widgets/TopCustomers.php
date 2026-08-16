@@ -9,9 +9,12 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class TopCustomers extends BaseWidget
 {
-    protected int | string | array $columnSpan = 2;
+    protected int|string|array $columnSpan = 2;
+
     protected static ?int $sort = 8;
+
     protected static ?string $heading = 'Pelanggan Teraktif';
+
     protected ?string $pollingInterval = '5s';
 
     public function table(Table $table): Table

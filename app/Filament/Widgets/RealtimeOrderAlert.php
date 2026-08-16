@@ -3,15 +3,18 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Order;
+use Filament\Notifications\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
 
 class RealtimeOrderAlert extends Widget
 {
     protected string $view = 'filament.widgets.realtime-order-alert';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public ?int $lastKnownOrderId = null;
+
     public ?int $lastKnownPaidCount = null;
 
     public function mount()
@@ -32,19 +35,19 @@ class RealtimeOrderAlert extends Widget
             $this->dispatch('play-order-sound', [
                 'id' => $latestOrder->id,
                 'customer' => $latestOrder->customer_name,
-                'amount' => 'Rp ' . number_format($latestOrder->total_amount, 0, ',', '.'),
+                'amount' => 'Rp '.number_format($latestOrder->total_amount, 0, ',', '.'),
                 'count' => $newOrdersCount,
             ]);
 
-            \Filament\Notifications\Notification::make()
+            Notification::make()
                 ->title('🎉 ORDERAN BARU MASUK!')
                 ->icon('heroicon-o-shopping-bag')
                 ->iconColor('warning')
-                ->body("Pesanan #{$latestOrder->id} dari {$latestOrder->customer_name} sebesar Rp " . number_format($latestOrder->total_amount, 0, ',', '.'))
+                ->body("Pesanan #{$latestOrder->id} dari {$latestOrder->customer_name} sebesar Rp ".number_format($latestOrder->total_amount, 0, ',', '.'))
                 ->actions([
-                    \Filament\Notifications\Actions\Action::make('view')
+                    Action::make('view')
                         ->label('Lihat Pesanan')
-                        ->url('/admin/orders/' . $latestOrder->id . '/edit'),
+                        ->url('/admin/orders/'.$latestOrder->id.'/edit'),
                 ])
                 ->persistent()
                 ->send();
@@ -62,15 +65,15 @@ class RealtimeOrderAlert extends Widget
                     'customer' => $latestPaidOrder->customer_name,
                 ]);
 
-                \Filament\Notifications\Notification::make()
+                Notification::make()
                     ->title('💳 PEMBAYARAN LUNAS MASUK!')
                     ->icon('heroicon-o-check-circle')
                     ->iconColor('success')
                     ->body("Pesanan #{$latestPaidOrder->id} dari {$latestPaidOrder->customer_name} telah LUNAS.")
                     ->actions([
-                        \Filament\Notifications\Actions\Action::make('view')
+                        Action::make('view')
                             ->label('Lihat Pesanan')
-                            ->url('/admin/orders/' . $latestPaidOrder->id . '/edit'),
+                            ->url('/admin/orders/'.$latestPaidOrder->id.'/edit'),
                     ])
                     ->persistent()
                     ->send();
