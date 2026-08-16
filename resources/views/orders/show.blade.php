@@ -435,9 +435,9 @@
                     <div class="px-5 py-4 md:px-6 md:py-5">
                         {{-- Header --}}
                         <div class="text-center mb-4 pb-4 border-b-2 border-dashed border-gray-300">
-                            <div class="w-10 h-10 rounded-full border-2 border-amber-500 bg-[#0f1115] mb-2 mx-auto" style="display: table; box-sizing: border-box; width: 40px; height: 40px;">
+                            <div class="w-10 h-10 rounded-full mb-2 mx-auto" style="display: table; box-sizing: border-box; width: 40px; height: 40px; border: 2px solid #e2c86e; background-color: #ffffff; border-radius: 9999px;">
                                 <div style="display: table-cell; vertical-align: middle; text-align: center;">
-                                    <span class="font-serif text-xl font-black text-amber-500" style="line-height: 1; font-family: Georgia, Cambria, 'Times New Roman', Times, serif; display: inline-block;">{{ substr(\App\Models\Setting::getGlobal()->store_name, 0, 1) }}</span>
+                                    <span class="font-serif text-xl font-black" style="line-height: 1; font-family: Georgia, Cambria, 'Times New Roman', Times, serif; display: inline-block; color: #e2c86e;">{{ substr(\App\Models\Setting::getGlobal()->store_name, 0, 1) }}</span>
                                 </div>
                             </div>
                             <h3 class="font-black text-sm uppercase tracking-widest">{{ \App\Models\Setting::getGlobal()->store_name }}</h3>
