@@ -99,7 +99,8 @@
     }
     
     $waText .= "*Total Pembayaran:* Rp " . number_format($order->total_amount, 0, ',', '.') . "\n"
-            . "*Metode Pembayaran:* " . strtoupper($paymentMethodLabel) . "\n\n"
+            . "*Metode Pembayaran:* " . strtoupper($paymentMethodLabel) . "\n"
+            . "*Status Pesanan:* " . strtoupper($statusLabel) . "\n\n"
             . "*Alamat Pengiriman:*\n"
             . "{$order->shipping_address}\n\n"
             . "Mohon segera diproses ya. Terima kasih! 😊";
