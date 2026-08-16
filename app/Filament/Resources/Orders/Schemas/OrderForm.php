@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Orders\Schemas;
 
 use App\Models\Product;
+use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -123,50 +124,52 @@ class OrderForm
                         'cancelled' => 'Dibatalkan',
                     ])
                     ->required(),
-                Placeholder::make('payment_proof')
-                    ->label('Bukti Pembayaran')
-                    ->columnSpanFull()
-                    ->content(function ($record) {
-                        if (! $record || ! $record->payment_proof) {
-                            return 'Belum mengunggah bukti pembayaran.';
-                        }
+                Group::make([
+                    Placeholder::make('payment_proof')
+                        ->label('Bukti Pembayaran')
+                        ->content(function ($record) {
+                            if (! $record || ! $record->payment_proof) {
+                                return 'Belum mengunggah bukti pembayaran.';
+                            }
 
-                        $proofUrl = asset('storage/'.$record->payment_proof);
+                            $proofUrl = asset('storage/'.$record->payment_proof);
 
-                        return new HtmlString("
-                            <div style='margin-top: 0.5rem;'>
-                                <a href='{$proofUrl}' target='_blank' style='display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: #fbbf24; font-weight: bold; text-decoration: underline;'>
-                                    <svg width='16' height='16' fill='none' stroke='currentColor' stroke-width='2' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14'></path></svg>
-                                    Buka Bukti Pembayaran di Tab Baru
-                                </a>
-                                <div style='margin-top: 0.75rem; border: 1px solid #374151; border-radius: 0.75rem; overflow: hidden; background-color: rgba(0,0,0,0.2); padding: 0.5rem; display: inline-block;'>
-                                    <img src='{$proofUrl}' alt='Bukti Pembayaran' style='max-width: 280px; max-height: 350px; border-radius: 0.5rem; display: block; object-fit: contain;' />
+                            return new HtmlString("
+                                <div style='margin-top: 0.5rem;'>
+                                    <a href='{$proofUrl}' target='_blank' style='display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: #fbbf24; font-weight: bold; text-decoration: underline;'>
+                                        <svg width='16' height='16' fill='none' stroke='currentColor' stroke-width='2' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14'></path></svg>
+                                        Buka Bukti Pembayaran di Tab Baru
+                                    </a>
+                                    <div style='margin-top: 0.75rem; border: 1px solid #374151; border-radius: 0.75rem; overflow: hidden; background-color: rgba(0,0,0,0.2); padding: 0.5rem; display: inline-block;'>
+                                        <img src='{$proofUrl}' alt='Bukti Pembayaran' style='max-width: 280px; max-height: 350px; border-radius: 0.5rem; display: block; object-fit: contain;' />
+                                    </div>
                                 </div>
-                            </div>
-                        ");
-                    }),
-                Placeholder::make('delivery_proof')
-                    ->label('Bukti Penerimaan / Produk Sampai')
-                    ->columnSpanFull()
-                    ->content(function ($record) {
-                        if (! $record || ! $record->delivery_proof) {
-                            return 'Belum mengunggah bukti penerimaan.';
-                        }
+                            ");
+                        }),
+                    Placeholder::make('delivery_proof')
+                        ->label('Bukti Penerimaan / Produk Sampai')
+                        ->content(function ($record) {
+                            if (! $record || ! $record->delivery_proof) {
+                                return 'Belum mengunggah bukti penerimaan.';
+                            }
 
-                        $proofUrl = asset('storage/'.$record->delivery_proof);
+                            $proofUrl = asset('storage/'.$record->delivery_proof);
 
-                        return new HtmlString("
-                            <div style='margin-top: 0.5rem;'>
-                                <a href='{$proofUrl}' target='_blank' style='display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: #fbbf24; font-weight: bold; text-decoration: underline;'>
-                                    <svg width='16' height='16' fill='none' stroke='currentColor' stroke-width='2' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14'></path></svg>
-                                    Buka Bukti Penerimaan di Tab Baru
-                                </a>
-                                <div style='margin-top: 0.75rem; border: 1px solid #374151; border-radius: 0.75rem; overflow: hidden; background-color: rgba(0,0,0,0.2); padding: 0.5rem; display: inline-block;'>
-                                    <img src='{$proofUrl}' alt='Bukti Penerimaan' style='max-width: 280px; max-height: 350px; border-radius: 0.5rem; display: block; object-fit: contain;' />
+                            return new HtmlString("
+                                <div style='margin-top: 0.5rem;'>
+                                    <a href='{$proofUrl}' target='_blank' style='display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: #fbbf24; font-weight: bold; text-decoration: underline;'>
+                                        <svg width='16' height='16' fill='none' stroke='currentColor' stroke-width='2' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14'></path></svg>
+                                        Buka Bukti Penerimaan di Tab Baru
+                                    </a>
+                                    <div style='margin-top: 0.75rem; border: 1px solid #374151; border-radius: 0.75rem; overflow: hidden; background-color: rgba(0,0,0,0.2); padding: 0.5rem; display: inline-block;'>
+                                        <img src='{$proofUrl}' alt='Bukti Penerimaan' style='max-width: 280px; max-height: 350px; border-radius: 0.5rem; display: block; object-fit: contain;' />
+                                    </div>
                                 </div>
-                            </div>
-                        ");
-                    }),
+                            ");
+                        }),
+                ])
+                    ->columns(2)
+                    ->columnSpanFull(),
             ]);
     }
 }
