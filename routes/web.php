@@ -13,7 +13,6 @@ use App\Models\Product;
 use App\Models\User;
 use App\Models\Voucher;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/search/live', function (Request $request) {
@@ -188,12 +187,6 @@ Route::get('/logout-cepat', function () {
     session()->regenerateToken();
 
     return redirect('/admin');
-});
-
-Route::get('/run-migration-temp-secure-xyz-2', function () {
-    Artisan::call('migrate', ['--force' => true]);
-
-    return Artisan::output();
 });
 
 require __DIR__.'/auth.php';
