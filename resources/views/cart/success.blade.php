@@ -243,24 +243,33 @@
                     </p>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="bg-black/25 border border-gray-850 rounded-xl p-4 space-y-3">
-                            <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-wider">Transfer Bank</h4>
-                            <div class="space-y-1.5 text-xs">
-                                <p class="text-gray-500">Bank: <span class="text-white font-bold">{{ \App\Models\Setting::getGlobal()->bank_name }}</span></p>
-                                <p class="text-gray-500">No. Rekening: 
-                                    <span class="text-white font-bold font-mono select-all">{{ \App\Models\Setting::getGlobal()->bank_account_number }}</span>
-                                    <button onclick="copyBankNumber('{{ \App\Models\Setting::getGlobal()->bank_account_number }}')" class="ml-1 text-gold-500 hover:text-amber-400 text-[10px] font-bold uppercase transition">Salin</button>
-                                </p>
-                                <p class="text-gray-500">Atas Nama: <span class="text-white font-bold">{{ \App\Models\Setting::getGlobal()->bank_account_name }}</span></p>
+                        @php
+                            $methods = \App\Models\Setting::getGlobal()->manual_payment_methods ?? [];
+                        @endphp
+                        @forelse($methods as $method)
+                        <div class="bg-black/25 border border-gray-850 rounded-xl p-4 space-y-3 flex flex-col justify-between">
+                            <div class="space-y-2">
+                                <h4 class="text-[10px] font-black text-gold-500 uppercase tracking-wider">{{ $method['name'] ?? 'Metode Pembayaran' }}</h4>
+                                <div class="space-y-1.5 text-xs">
+                                    <p class="text-gray-500 font-medium">No. Rekening / HP: 
+                                        <span class="text-white font-bold font-mono select-all">{{ $method['account_number'] ?? '' }}</span>
+                                        <button onclick="copyBankNumber('{{ $method['account_number'] ?? '' }}')" class="ml-1 text-gold-500 hover:text-amber-400 text-[10px] font-bold uppercase transition">Salin</button>
+                                    </p>
+                                    <p class="text-gray-500 font-medium">Atas Nama: <span class="text-white font-bold">{{ $method['account_name'] ?? '' }}</span></p>
+                                </div>
                             </div>
+                            @if(!empty($method['qris_image']))
+                            <div class="pt-3 border-t border-gray-850 flex flex-col items-center justify-center space-y-1.5">
+                                <p class="text-[8px] font-black text-gray-500 uppercase tracking-wider">Scan QRIS</p>
+                                <img src="{{ asset('storage/' . $method['qris_image']) }}" alt="QRIS" class="w-28 h-28 object-contain rounded-lg border border-gray-800 bg-white p-1">
+                            </div>
+                            @endif
                         </div>
-
-                        @if(\App\Models\Setting::getGlobal()->qris_image)
-                        <div class="bg-black/25 border border-gray-850 rounded-xl p-4 flex flex-col items-center justify-center space-y-2">
-                            <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-wider">QRIS</h4>
-                            <img src="{{ asset('storage/' . \App\Models\Setting::getGlobal()->qris_image) }}" alt="QRIS" class="w-32 h-32 object-contain rounded-lg border border-gray-800">
+                        @empty
+                        <div class="col-span-2 text-center py-6 text-xs text-gray-500 bg-black/25 border border-gray-850 rounded-xl">
+                            Belum ada metode pembayaran manual yang dikonfigurasi oleh admin.
                         </div>
-                        @endif
+                        @endforelse
                     </div>
 
                     <div class="border-t border-gray-850 pt-5 space-y-4">

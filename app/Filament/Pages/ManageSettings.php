@@ -109,26 +109,36 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
                     ])->columns(2),
 
                 Section::make('Pembayaran Manual (Transfer Bank / QRIS)')
-                    ->description('Pengaturan untuk pembayaran manual ke rekening bank atau QRIS toko.')
+                    ->description('Pengaturan untuk pembayaran manual ke rekening bank atau QRIS toko. Anda dapat menambahkan beberapa metode pembayaran manual.')
                     ->components([
                         Forms\Components\Toggle::make('manual_payment_is_active')
                             ->label('Aktifkan Pembayaran Manual')
                             ->default(false)
-                            ->live(),
-                        Forms\Components\TextInput::make('bank_name')
-                            ->label('Nama Bank')
-                            ->required(fn ($get) => $get('manual_payment_is_active')),
-                        Forms\Components\TextInput::make('bank_account_number')
-                            ->label('Nomor Rekening')
-                            ->required(fn ($get) => $get('manual_payment_is_active')),
-                        Forms\Components\TextInput::make('bank_account_name')
-                            ->label('Nama Pemilik Rekening')
-                            ->required(fn ($get) => $get('manual_payment_is_active')),
-                        Forms\Components\FileUpload::make('qris_image')
-                            ->label('QRIS Toko (Gambar)')
-                            ->image()
-                            ->directory('qris')
-                            ->nullable(),
+                            ->live()
+                            ->columnSpanFull(),
+                        Forms\Components\Repeater::make('manual_payment_methods')
+                            ->label('Metode Pembayaran Manual')
+                            ->visible(fn ($get) => $get('manual_payment_is_active'))
+                            ->schema([
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Nama Metode Pembayaran')
+                                    ->placeholder('Contoh: Transfer Bank BCA, DANA, OVO')
+                                    ->required(),
+                                Forms\Components\TextInput::make('account_number')
+                                    ->label('Nomor Rekening / HP')
+                                    ->required(),
+                                Forms\Components\TextInput::make('account_name')
+                                    ->label('Atas Nama')
+                                    ->required(),
+                                Forms\Components\FileUpload::make('qris_image')
+                                    ->label('QRIS Pembayaran (Opsional)')
+                                    ->image()
+                                    ->directory('qris')
+                                    ->nullable(),
+                            ])
+                            ->columns(2)
+                            ->columnSpanFull()
+                            ->default([]),
                     ])->columns(2),
 
                 Section::make('Voucher Pendaftaran Pengguna Baru')

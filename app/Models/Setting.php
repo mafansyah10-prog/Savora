@@ -9,6 +9,10 @@ class Setting extends Model
 {
     protected $guarded = [];
 
+    protected $casts = [
+        'manual_payment_methods' => 'array',
+    ];
+
     // Clear cache whenever setting is updated
     protected static function booted()
     {

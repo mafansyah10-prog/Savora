@@ -352,9 +352,14 @@ class SavoraPagesTest extends TestCase
         $setting->update([
             'pakasir_is_active' => true,
             'manual_payment_is_active' => true,
-            'bank_name' => 'BCA Test',
-            'bank_account_number' => '9876543210',
-            'bank_account_name' => 'Savora Test Manual',
+            'manual_payment_methods' => [
+                [
+                    'name' => 'BCA Test',
+                    'account_number' => '9876543210',
+                    'account_name' => 'Savora Test Manual',
+                    'qris_image' => null,
+                ],
+            ],
         ]);
         Cache::forget('global_settings');
 
