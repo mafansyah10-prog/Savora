@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Filament\Resources\OrderResource;
+use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -35,6 +37,11 @@ class Order extends Model
                         ->icon('heroicon-o-shopping-bag')
                         ->iconColor('warning')
                         ->body("Pesanan #{$order->id} dari {$order->customer_name} sebesar Rp ".number_format($order->total_amount, 0, ',', '.'))
+                        ->actions([
+                            Action::make('view')
+                                ->label('Lihat Detail')
+                                ->url(OrderResource::getUrl('edit', ['record' => $order])),
+                        ])
                         ->sendToDatabase($admin);
                 }
             } catch (\Throwable $e) {
@@ -64,6 +71,11 @@ class Order extends Model
                             ->icon('heroicon-o-check-circle')
                             ->iconColor('success')
                             ->body("Pesanan #{$order->id} dari {$order->customer_name} telah LUNAS.")
+                            ->actions([
+                                Action::make('view')
+                                    ->label('Lihat Detail')
+                                    ->url(OrderResource::getUrl('edit', ['record' => $order])),
+                            ])
                             ->sendToDatabase($admin);
                     }
                 } catch (\Throwable $e) {
