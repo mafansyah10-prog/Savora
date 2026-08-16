@@ -22,6 +22,9 @@ class OrderForm
                 TextInput::make('customer_phone')
                     ->label('Nomor Telepon')
                     ->required(),
+                Placeholder::make('created_at')
+                    ->label('Tanggal & Waktu Pesanan')
+                    ->content(fn ($record) => $record && $record->created_at ? $record->created_at->translatedFormat('d F Y H:i:s') : '—'),
                 Textarea::make('shipping_address')
                     ->label('Alamat Pengiriman')
                     ->required()
