@@ -134,13 +134,13 @@ class OrderForm
                         $proofUrl = asset('storage/'.$record->payment_proof);
 
                         return new HtmlString("
-                            <div class='space-y-2'>
-                                <a href='{$proofUrl}' target='_blank' class='inline-flex items-center gap-1.5 text-xs text-primary-500 hover:text-primary-400 font-bold transition'>
-                                    <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14'></path></svg>
+                            <div style='margin-top: 0.5rem;'>
+                                <a href='{$proofUrl}' target='_blank' style='display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: #fbbf24; font-weight: bold; text-decoration: underline;'>
+                                    <svg width='16' height='16' fill='none' stroke='currentColor' stroke-width='2' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14'></path></svg>
                                     Buka Bukti Pembayaran di Tab Baru
                                 </a>
-                                <div class='border border-gray-800 rounded-xl overflow-hidden max-w-sm bg-black/25 p-2'>
-                                    <img src='{$proofUrl}' alt='Bukti Pembayaran' class='max-w-full h-auto rounded-lg object-contain' style='max-height: 350px;' />
+                                <div style='margin-top: 0.75rem; border: 1px solid #374151; border-radius: 0.75rem; overflow: hidden; background-color: rgba(0,0,0,0.2); padding: 0.5rem; display: inline-block;'>
+                                    <img src='{$proofUrl}' alt='Bukti Pembayaran' style='max-width: 280px; max-height: 350px; border-radius: 0.5rem; display: block; object-fit: contain;' />
                                 </div>
                             </div>
                         ");
