@@ -190,14 +190,4 @@ Route::get('/logout-cepat', function () {
     return redirect('/admin');
 });
 
-Route::get('/read-log-temp-xyz', function () {
-    $path = storage_path('logs/laravel.log');
-    if (! file_exists($path)) {
-        return 'No log file';
-    }
-    $lines = file($path);
-
-    return response(implode('', array_slice($lines, -150)))->header('Content-Type', 'text/plain');
-});
-
 require __DIR__.'/auth.php';
