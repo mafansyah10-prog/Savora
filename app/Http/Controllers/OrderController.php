@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Services\MidtransService;
-use App\Services\PaymentProofAiVerifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -63,19 +62,6 @@ class OrderController extends Controller
         if ($request->hasFile('payment_proof')) {
             $file = $request->file('payment_proof');
 
-            // Panggil Layanan AI Verifikator
-            $aiVerifier = new PaymentProofAiVerifier;
-            $analysis = $aiVerifier->analyze($file, $order);
-
-            if ($analysis['status'] === 'fake') {
-                // Simpan log analisis gagal ke order agar admin tahu
-                $order->update([
-                    'payment_proof_analysis' => $analysis,
-                ]);
-
-                return back()->with('error', $analysis['reason']);
-            }
-
             // Hapus file lama jika ada
             if ($order->payment_proof && Storage::disk('public')->exists($order->payment_proof)) {
                 Storage::disk('public')->delete($order->payment_proof);
@@ -83,15 +69,14 @@ class OrderController extends Controller
 
             $path = $file->store('payment_proofs', 'public');
 
-            // Konfirmasi Pembayaran Otomatis: Update status pesanan ke 'paid' (Lunas)
+            // Konfirmasi Pembayaran: Update status pesanan ke 'paid' (Lunas / Diproses) tanpa AI
             $order->update([
                 'payment_proof' => $path,
-                'payment_proof_analysis' => $analysis,
+                'payment_proof_analysis' => null,
                 'status' => 'paid',
             ]);
-
         }
 
-        return back()->with('success', 'Pembayaran berhasil diverifikasi secara otomatis oleh sistem AI! Status pesanan Anda kini berubah menjadi Lunas.');
+        return back()->with('success', 'Bukti pembayaran berhasil dikirim! Pembayaran Anda akan segera dikonfirmasi dan pesanan diproses.');
     }
 }
