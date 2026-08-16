@@ -22,8 +22,10 @@ class ListOrders extends ListRecords
     public function getTabs(): array
     {
         return [
-            'all' => Tab::make('Semua Pesanan')
-                ->badge(fn () => static::$resource::getModel()::count()),
+            'today' => Tab::make('Hari Ini')
+                ->modifyQueryUsing(fn (Builder $query) => $query->whereDate('created_at', now()->toDateString()))
+                ->badge(fn () => static::$resource::getModel()::whereDate('created_at', now()->toDateString())->count())
+                ->badgeColor('primary'),
             'pending' => Tab::make('Belum Terkonfirmasi')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'pending'))
                 ->badge(fn () => static::$resource::getModel()::where('status', 'pending')->count())
@@ -32,6 +34,8 @@ class ListOrders extends ListRecords
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', '!=', 'pending'))
                 ->badge(fn () => static::$resource::getModel()::where('status', '!=', 'pending')->count())
                 ->badgeColor('success'),
+            'all' => Tab::make('Semua Pesanan')
+                ->badge(fn () => static::$resource::getModel()::count()),
         ];
     }
 }
