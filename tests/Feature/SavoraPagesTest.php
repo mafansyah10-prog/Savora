@@ -9,7 +9,9 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Models\Voucher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class SavoraPagesTest extends TestCase
@@ -389,5 +391,44 @@ class SavoraPagesTest extends TestCase
         $response->assertSee('Savora Test Manual');
         // Make sure it doesn't render Pakasir button when manual_payment_is_active is true
         $response->assertDontSee('Menunggu Pembayaran Pakasir');
+    }
+
+    public function test_customer_can_upload_delivery_proof_to_complete_shipped_order()
+    {
+        Storage::fake('public');
+
+        $user = User::create([
+            'name' => 'John Receiver',
+            'email' => 'receiver@test.com',
+            'password' => bcrypt('password'),
+        ]);
+
+        $order = Order::create([
+            'user_id' => $user->id,
+            'customer_name' => 'John Receiver',
+            'customer_phone' => '08123456789',
+            'shipping_address' => 'Jl. Test Receiver',
+            'total_amount' => 25000,
+            'status' => 'shipped',
+            'payment_method' => 'bca',
+            'items' => [],
+        ]);
+
+        $response = $this->actingAs($user)->get(route('orders.show', $order));
+        $response->assertStatus(200);
+        $response->assertSee('Konfirmasi Produk Sampai');
+
+        $file = UploadedFile::fake()->image('delivery_proof.jpg');
+
+        $response = $this->actingAs($user)->post(route('orders.upload_delivery_proof', $order), [
+            'delivery_proof' => $file,
+        ]);
+
+        $response->assertRedirect();
+
+        $order->refresh();
+        $this->assertEquals('completed', $order->status);
+        $this->assertNotNull($order->delivery_proof);
+        Storage::disk('public')->assertExists($order->delivery_proof);
     }
 }

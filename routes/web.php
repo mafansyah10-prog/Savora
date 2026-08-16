@@ -139,6 +139,7 @@ Route::middleware('auth')->group(function () {
         return view('orders.print', compact('order'));
     })->name('orders.print');
     Route::post('/pesanan/{order}/bukti-pembayaran', [OrderController::class, 'uploadPaymentProof'])->name('orders.upload_proof');
+    Route::post('/pesanan/{order}/bukti-penerimaan', [OrderController::class, 'uploadDeliveryProof'])->name('orders.upload_delivery_proof');
     Route::get('/keranjang/sukses/{order}', [CartController::class, 'success'])->name('cart.success');
 });
 

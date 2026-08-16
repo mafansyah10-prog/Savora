@@ -79,4 +79,32 @@ class OrderController extends Controller
 
         return back()->with('success', 'Bukti pembayaran berhasil dikirim! Pembayaran Anda akan segera dikonfirmasi dan pesanan diproses.');
     }
+
+    public function uploadDeliveryProof(Request $request, Order $order)
+    {
+        abort_if($order->user_id != auth()->id(), 403);
+        abort_if($order->status !== 'shipped', 400);
+
+        $request->validate([
+            'delivery_proof' => 'required|image|max:3072', // Max 3MB
+        ]);
+
+        if ($request->hasFile('delivery_proof')) {
+            $file = $request->file('delivery_proof');
+
+            // Hapus file lama jika ada
+            if ($order->delivery_proof && Storage::disk('public')->exists($order->delivery_proof)) {
+                Storage::disk('public')->delete($order->delivery_proof);
+            }
+
+            $path = $file->store('delivery_proofs', 'public');
+
+            $order->update([
+                'delivery_proof' => $path,
+                'status' => 'completed',
+            ]);
+        }
+
+        return back()->with('success', 'Bukti terima barang berhasil diunggah! Pesanan Anda telah ditandai sebagai Selesai.');
+    }
 }

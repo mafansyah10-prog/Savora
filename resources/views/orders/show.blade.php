@@ -373,9 +373,28 @@
                                    class="block w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-black file:uppercase file:bg-gray-800 file:text-gold-500 hover:file:bg-gray-700 file:cursor-pointer bg-black/25 border border-gray-850 rounded-lg p-2">
                             <button type="submit" class="w-full bg-gold-500 hover:bg-gold-600 text-black font-black text-xs py-3 rounded-lg transition active:scale-95 uppercase tracking-widest text-center cursor-pointer">
                                 Kirim & Verifikasi Pembayaran
-                            </button>
                         </form>
                     </div>
+                </div>
+                @elseif($order->status === 'shipped')
+                {{-- Delivery Proof Upload Form --}}
+                <div id="delivery-proof-container" class="bg-[#16181d] border border-gray-800 rounded-xl md:rounded-2xl p-4 md:p-5 space-y-4">
+                    <div class="flex items-center gap-2 text-brand-cyan">
+                        <i data-lucide="package-check" class="w-4 h-4 text-brand-cyan"></i>
+                        <p class="text-xs font-black uppercase tracking-wider">Konfirmasi Produk Sampai</p>
+                    </div>
+                    <p class="text-xs text-gray-400 leading-relaxed">
+                        Pesanan Anda sedang dikirim oleh kurir. Silakan unggah foto bukti bahwa produk telah sampai ke lokasi tujuan Anda untuk menyelesaikan transaksi ini.
+                    </p>
+
+                    <form action="{{ route('orders.upload_delivery_proof', $order) }}" method="POST" enctype="multipart/form-data" class="space-y-3">
+                        @csrf
+                        <input type="file" name="delivery_proof" required accept="image/*"
+                               class="block w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-black file:uppercase file:bg-gray-800 file:text-brand-cyan hover:file:bg-gray-700 file:cursor-pointer bg-black/25 border border-gray-850 rounded-lg p-2">
+                        <button type="submit" class="w-full bg-brand-cyan hover:bg-teal-400 text-black font-black text-xs py-3 rounded-lg transition active:scale-95 uppercase tracking-widest text-center cursor-pointer">
+                            Unggah Bukti & Selesaikan Pesanan
+                        </button>
+                    </form>
                 </div>
                 @endif
 
