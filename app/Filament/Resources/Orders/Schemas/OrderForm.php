@@ -123,6 +123,28 @@ class OrderForm
                         'cancelled' => 'Dibatalkan',
                     ])
                     ->required(),
+                Placeholder::make('payment_proof')
+                    ->label('Bukti Pembayaran')
+                    ->columnSpanFull()
+                    ->content(function ($record) {
+                        if (! $record || ! $record->payment_proof) {
+                            return 'Belum mengunggah bukti pembayaran.';
+                        }
+
+                        $proofUrl = asset('storage/'.$record->payment_proof);
+
+                        return new HtmlString("
+                            <div class='space-y-2'>
+                                <a href='{$proofUrl}' target='_blank' class='inline-flex items-center gap-1.5 text-xs text-primary-500 hover:text-primary-400 font-bold transition'>
+                                    <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14'></path></svg>
+                                    Buka Bukti Pembayaran di Tab Baru
+                                </a>
+                                <div class='border border-gray-800 rounded-xl overflow-hidden max-w-sm bg-black/25 p-2'>
+                                    <img src='{$proofUrl}' alt='Bukti Pembayaran' class='max-w-full h-auto rounded-lg object-contain' style='max-height: 350px;' />
+                                </div>
+                            </div>
+                        ");
+                    }),
             ]);
     }
 }
