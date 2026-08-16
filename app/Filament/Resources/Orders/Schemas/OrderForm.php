@@ -3,11 +3,11 @@
 namespace App\Filament\Resources\Orders\Schemas;
 
 use App\Models\Product;
-use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
 
