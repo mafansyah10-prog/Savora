@@ -77,18 +77,156 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
                         Forms\Components\Toggle::make('is_store_open')
                             ->label('Buka Toko')
                             ->helperText('Jika dinonaktifkan, toko akan ditutup secara manual dan pelanggan tidak bisa memesan.')
-                            ->default(true),
-                        Forms\Components\TimePicker::make('store_open_time')
-                            ->label('Jam Buka')
-                            ->seconds(false)
-                            ->nullable()
-                            ->helperText('Kosongkan jika ingin buka 24 jam (sesuai status di atas)'),
-                        Forms\Components\TimePicker::make('store_close_time')
-                            ->label('Jam Tutup')
-                            ->seconds(false)
-                            ->nullable()
-                            ->helperText('Kosongkan jika ingin buka 24 jam (sesuai status di atas)'),
-                    ])->columns(3),
+                            ->default(true)
+                            ->columnSpanFull(),
+
+                        Forms\Components\Tabs::make('OperationalSchedules')
+                            ->tabs([
+                                Forms\Components\Tabs\Tab::make('Jadwal Mingguan')
+                                    ->schema([
+                                        Forms\Components\Grid::make(3)
+                                            ->schema([
+                                                // Monday
+                                                Forms\Components\Toggle::make('weekly_schedule.monday.is_open')
+                                                    ->label('Senin - Buka Toko')
+                                                    ->default(true),
+                                                Forms\Components\TimePicker::make('weekly_schedule.monday.open_time')
+                                                    ->label('Jam Buka')
+                                                    ->seconds(false)
+                                                    ->nullable(),
+                                                Forms\Components\TimePicker::make('weekly_schedule.monday.close_time')
+                                                    ->label('Jam Tutup')
+                                                    ->seconds(false)
+                                                    ->nullable(),
+
+                                                // Tuesday
+                                                Forms\Components\Toggle::make('weekly_schedule.tuesday.is_open')
+                                                    ->label('Selasa - Buka Toko')
+                                                    ->default(true),
+                                                Forms\Components\TimePicker::make('weekly_schedule.tuesday.open_time')
+                                                    ->label('Jam Buka')
+                                                    ->seconds(false)
+                                                    ->nullable(),
+                                                Forms\Components\TimePicker::make('weekly_schedule.tuesday.close_time')
+                                                    ->label('Jam Tutup')
+                                                    ->seconds(false)
+                                                    ->nullable(),
+
+                                                // Wednesday
+                                                Forms\Components\Toggle::make('weekly_schedule.wednesday.is_open')
+                                                    ->label('Rabu - Buka Toko')
+                                                    ->default(true),
+                                                Forms\Components\TimePicker::make('weekly_schedule.wednesday.open_time')
+                                                    ->label('Jam Buka')
+                                                    ->seconds(false)
+                                                    ->nullable(),
+                                                Forms\Components\TimePicker::make('weekly_schedule.wednesday.close_time')
+                                                    ->label('Jam Tutup')
+                                                    ->seconds(false)
+                                                    ->nullable(),
+
+                                                // Thursday
+                                                Forms\Components\Toggle::make('weekly_schedule.thursday.is_open')
+                                                    ->label('Kamis - Buka Toko')
+                                                    ->default(true),
+                                                Forms\Components\TimePicker::make('weekly_schedule.thursday.open_time')
+                                                    ->label('Jam Buka')
+                                                    ->seconds(false)
+                                                    ->nullable(),
+                                                Forms\Components\TimePicker::make('weekly_schedule.thursday.close_time')
+                                                    ->label('Jam Tutup')
+                                                    ->seconds(false)
+                                                    ->nullable(),
+
+                                                // Friday
+                                                Forms\Components\Toggle::make('weekly_schedule.friday.is_open')
+                                                    ->label('Jumat - Buka Toko')
+                                                    ->default(true),
+                                                Forms\Components\TimePicker::make('weekly_schedule.friday.open_time')
+                                                    ->label('Jam Buka')
+                                                    ->seconds(false)
+                                                    ->nullable(),
+                                                Forms\Components\TimePicker::make('weekly_schedule.friday.close_time')
+                                                    ->label('Jam Tutup')
+                                                    ->seconds(false)
+                                                    ->nullable(),
+
+                                                // Saturday
+                                                Forms\Components\Toggle::make('weekly_schedule.saturday.is_open')
+                                                    ->label('Sabtu - Buka Toko')
+                                                    ->default(true),
+                                                Forms\Components\TimePicker::make('weekly_schedule.saturday.open_time')
+                                                    ->label('Jam Buka')
+                                                    ->seconds(false)
+                                                    ->nullable(),
+                                                Forms\Components\TimePicker::make('weekly_schedule.saturday.close_time')
+                                                    ->label('Jam Tutup')
+                                                    ->seconds(false)
+                                                    ->nullable(),
+
+                                                // Sunday
+                                                Forms\Components\Toggle::make('weekly_schedule.sunday.is_open')
+                                                    ->label('Minggu - Buka Toko')
+                                                    ->default(true),
+                                                Forms\Components\TimePicker::make('weekly_schedule.sunday.open_time')
+                                                    ->label('Jam Buka')
+                                                    ->seconds(false)
+                                                    ->nullable(),
+                                                Forms\Components\TimePicker::make('weekly_schedule.sunday.close_time')
+                                                    ->label('Jam Tutup')
+                                                    ->seconds(false)
+                                                    ->nullable(),
+                                            ]),
+                                    ]),
+
+                                Forms\Components\Tabs\Tab::make('Jadwal Tanggal Khusus / Hari Libur')
+                                    ->schema([
+                                        Forms\Components\Repeater::make('special_schedules')
+                                            ->label('Daftar Tanggal Khusus')
+                                            ->schema([
+                                                Forms\Components\DatePicker::make('date')
+                                                    ->label('Tanggal')
+                                                    ->required(),
+                                                Forms\Components\Toggle::make('is_open')
+                                                    ->label('Buka Toko')
+                                                    ->default(false),
+                                                Forms\Components\TimePicker::make('open_time')
+                                                    ->label('Jam Buka')
+                                                    ->seconds(false)
+                                                    ->nullable(),
+                                                Forms\Components\TimePicker::make('close_time')
+                                                    ->label('Jam Tutup')
+                                                    ->seconds(false)
+                                                    ->nullable(),
+                                                Forms\Components\TextInput::make('note')
+                                                    ->label('Keterangan / Alasan')
+                                                    ->placeholder('Contoh: Libur Lebaran, Tutup Cepat, dll.')
+                                                    ->required(),
+                                            ])
+                                            ->columns(5)
+                                            ->default([])
+                                            ->columnSpanFull(),
+                                    ]),
+
+                                Forms\Components\Tabs\Tab::make('Global (Sederhana)')
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\TimePicker::make('store_open_time')
+                                                    ->label('Jam Buka Global')
+                                                    ->seconds(false)
+                                                    ->nullable()
+                                                    ->helperText('Hanya digunakan jika jadwal mingguan kosong'),
+                                                Forms\Components\TimePicker::make('store_close_time')
+                                                    ->label('Jam Tutup Global')
+                                                    ->seconds(false)
+                                                    ->nullable()
+                                                    ->helperText('Hanya digunakan jika jadwal mingguan kosong'),
+                                            ])
+                                    ]),
+                            ])
+                            ->columnSpanFull(),
+                    ])->columns(1),
 
                 Section::make('Integrasi Pakasir Payment Gateway')
                     ->description('Pengaturan untuk pembayaran otomatis via Pakasir.')

@@ -319,11 +319,7 @@
     @if(!\App\Models\Setting::getGlobal()->isStoreOpen())
     <div class="bg-gradient-to-r from-red-900/90 via-red-800/90 to-orange-950/95 backdrop-blur-md text-white text-[9px] sm:text-xs font-black uppercase tracking-widest py-2.5 px-4 text-center flex items-center justify-center gap-2 border-b border-red-500/20 z-[90]">
         <i data-lucide="lock" class="w-3.5 h-3.5 text-red-400"></i>
-        <span>Toko Sedang Tutup. Anda tidak dapat melakukan pemesanan saat ini.
-            @if(\App\Models\Setting::getGlobal()->store_open_time && \App\Models\Setting::getGlobal()->store_close_time)
-                (Jam Operasional: {{ substr(\App\Models\Setting::getGlobal()->store_open_time, 0, 5) }} - {{ substr(\App\Models\Setting::getGlobal()->store_close_time, 0, 5) }})
-            @endif
-        </span>
+        <span>Toko Sedang Tutup. Anda tidak dapat melakukan pemesanan saat ini. ({{ \App\Models\Setting::getGlobal()->getStoreStatusText() }})</span>
     </div>
     @endif
     {{-- Global Toast Notification --}}
