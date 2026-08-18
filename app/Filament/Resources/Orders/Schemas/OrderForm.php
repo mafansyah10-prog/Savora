@@ -125,9 +125,9 @@ class OrderForm
                     ])
                     ->required(),
                 Group::make([
-                    Placeholder::make('payment_proof')
+                    TextEntry::make('payment_proof')
                         ->label('Bukti Pembayaran')
-                        ->content(function ($record) {
+                        ->state(function ($record) {
                             if (! $record || ! $record->payment_proof) {
                                 return 'Belum mengunggah bukti pembayaran.';
                             }
@@ -146,9 +146,9 @@ class OrderForm
                                 </div>
                             ");
                         }),
-                    Placeholder::make('delivery_proof')
+                    TextEntry::make('delivery_proof')
                         ->label('Bukti Penerimaan / Produk Sampai')
-                        ->content(function ($record) {
+                        ->state(function ($record) {
                             if (! $record || ! $record->delivery_proof) {
                                 return 'Belum mengunggah bukti penerimaan.';
                             }
