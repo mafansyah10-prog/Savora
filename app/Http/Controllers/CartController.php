@@ -186,6 +186,14 @@ class CartController extends Controller
      */
     public function add(Request $request)
     {
+        if (!\App\Models\Setting::getGlobal()->isStoreOpen()) {
+            $msg = 'Maaf, toko kami saat ini sedang tutup. Pemesanan tidak dapat dilakukan.';
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+            return redirect()->back()->with('error', $msg);
+        }
+
         $product = Product::findOrFail($request->product_id);
 
         // --- Stock check ---
@@ -536,6 +544,10 @@ class CartController extends Controller
      */
     public function checkout(Request $request)
     {
+        if (!\App\Models\Setting::getGlobal()->isStoreOpen()) {
+            return redirect()->back()->with('error', 'Maaf, toko kami saat ini sedang tutup. Silakan melakukan checkout kembali setelah toko buka.');
+        }
+
         if (! auth()->check()) {
             return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu untuk melakukan pemesanan.');
         }

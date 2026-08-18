@@ -199,11 +199,19 @@
                         @endif
                     @endif
 
+                    @if(\App\Models\Setting::getGlobal()->isStoreOpen())
                     <button type="submit"
                         class="w-full bg-gradient-to-r from-brand-cyan to-teal-400 hover:from-teal-400 hover:to-brand-cyan text-black font-black text-sm md:text-base py-4 md:py-5 rounded-2xl shadow-[0_10px_30px_rgba(78,205,196,0.3)] hover:shadow-[0_15px_40px_rgba(78,205,196,0.45)] transition-all duration-300 transform hover:-translate-y-1 active:scale-95 uppercase tracking-widest flex items-center justify-center gap-2.5">
                         <i data-lucide="shopping-cart" class="w-5 h-5 stroke-[2.5]"></i>
                         Tambah ke Keranjang
                     </button>
+                    @else
+                    <button type="button" disabled
+                        class="w-full bg-gray-850 text-gray-500 font-black text-sm md:text-base py-4 md:py-5 rounded-2xl cursor-not-allowed transition-all duration-300 uppercase tracking-widest flex items-center justify-center gap-2.5">
+                        <i data-lucide="lock" class="w-5 h-5 stroke-[2.5]"></i>
+                        Toko Sedang Tutup
+                    </button>
+                    @endif
                 </form>
 
                 <script>

@@ -338,7 +338,11 @@
                                 <span class="text-xs lg:text-sm font-black text-gray-200">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
                             @endif
                             
-                            @if($product->stock !== null && $product->stock <= 0)
+                            @if(!\App\Models\Setting::getGlobal()->isStoreOpen())
+                                <span class="w-8 h-8 sm:w-7 sm:h-7 bg-gray-800 text-gray-500 rounded-full flex items-center justify-center cursor-not-allowed" title="Toko Tutup">
+                                    <i data-lucide="lock" class="w-4 h-4 sm:w-3.5 sm:h-3.5"></i>
+                                </span>
+                            @elseif($product->stock !== null && $product->stock <= 0)
                                 <span class="w-8 h-8 sm:w-7 sm:h-7 bg-gray-700 text-gray-500 rounded-full flex items-center justify-center cursor-not-allowed" title="Stok Habis">
                                     <i data-lucide="ban" class="w-4 h-4 sm:w-3.5 sm:h-3.5"></i>
                                 </span>
@@ -469,32 +473,39 @@
                     </div>
                     
                     <div>
-                        <template x-if="selectedProduct.stock <= 0">
-                            <button disabled class="w-full bg-gray-800 text-gray-500 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest cursor-not-allowed flex items-center justify-center space-x-2">
-                                <i data-lucide="ban" class="w-4 h-4"></i>
-                                <span>Stok Habis</span>
+                        @if(!\App\Models\Setting::getGlobal()->isStoreOpen())
+                            <button disabled class="w-full bg-gray-850 text-gray-500 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest cursor-not-allowed flex items-center justify-center space-x-2">
+                                <i data-lucide="lock" class="w-4 h-4"></i>
+                                <span>Toko Tutup</span>
                             </button>
-                        </template>
-                        <template x-if="selectedProduct.stock > 0">
-                            <div>
-                                <template x-if="selectedProduct.has_customizations">
-                                    <a :href="selectedProduct.url" class="w-full bg-brand-cyan hover:bg-teal-400 text-black py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center space-x-2 active:scale-95">
-                                        <i data-lucide="sliders" class="w-4 h-4"></i>
-                                        <span>Pilih Opsi Kustomisasi</span>
-                                    </a>
-                                </template>
-                                <template x-if="!selectedProduct.has_customizations">
-                                    <form action="/keranjang/tambah" method="POST">
-                                        @csrf
-                                        <input type="hidden" name="product_id" :value="selectedProduct.id">
-                                        <button type="submit" class="w-full bg-brand-cyan hover:bg-teal-400 text-black py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center space-x-2 active:scale-95">
-                                            <i data-lucide="shopping-cart" class="w-4 h-4"></i>
-                                            <span>Masukkan Keranjang</span>
-                                        </button>
-                                    </form>
-                                </template>
-                            </div>
-                        </template>
+                        @else
+                            <template x-if="selectedProduct.stock <= 0">
+                                <button disabled class="w-full bg-gray-800 text-gray-500 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest cursor-not-allowed flex items-center justify-center space-x-2">
+                                    <i data-lucide="ban" class="w-4 h-4"></i>
+                                    <span>Stok Habis</span>
+                                </button>
+                            </template>
+                            <template x-if="selectedProduct.stock > 0">
+                                <div>
+                                    <template x-if="selectedProduct.has_customizations">
+                                        <a :href="selectedProduct.url" class="w-full bg-brand-cyan hover:bg-teal-400 text-black py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center space-x-2 active:scale-95">
+                                            <i data-lucide="sliders" class="w-4 h-4"></i>
+                                            <span>Pilih Opsi Kustomisasi</span>
+                                        </a>
+                                    </template>
+                                    <template x-if="!selectedProduct.has_customizations">
+                                        <form action="/keranjang/tambah" method="POST">
+                                            @csrf
+                                            <input type="hidden" name="product_id" :value="selectedProduct.id">
+                                            <button type="submit" class="w-full bg-brand-cyan hover:bg-teal-400 text-black py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center space-x-2 active:scale-95">
+                                                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                                                <span>Masukkan Keranjang</span>
+                                            </button>
+                                        </form>
+                                    </template>
+                                </div>
+                            </template>
+                        @endif
                     </div>
                 </div>
             </div>

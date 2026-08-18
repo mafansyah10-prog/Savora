@@ -420,12 +420,20 @@
                     <div class="border-t border-gray-800/60 px-4 md:px-6 py-5 bg-black/10 space-y-4">
                         {{-- Submit --}}
                         @auth
-                            <button type="submit"
-                                class="w-full bg-gradient-to-r from-[#e2c86e] to-[#f0d97a] hover:from-[#f0d97a] hover:to-[#e2c86e] text-[#0f1115] font-black text-xs md:text-sm py-4 rounded-2xl shadow-[0_8px_25px_rgba(226,200,110,0.35)] hover:shadow-[0_12px_35px_rgba(226,200,110,0.5)] transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95 uppercase tracking-widest flex items-center justify-center gap-2"
-                                {{ count($cart) == 0 ? 'disabled' : '' }}>
-                                <i data-lucide="shopping-bag" class="w-4 h-4 pointer-events-none"></i>
-                                <span>Checkout Sekarang</span>
-                            </button>
+                            @if(\App\Models\Setting::getGlobal()->isStoreOpen())
+                                <button type="submit"
+                                    class="w-full bg-gradient-to-r from-[#e2c86e] to-[#f0d97a] hover:from-[#f0d97a] hover:to-[#e2c86e] text-[#0f1115] font-black text-xs md:text-sm py-4 rounded-2xl shadow-[0_8px_25px_rgba(226,200,110,0.35)] hover:shadow-[0_12px_35px_rgba(226,200,110,0.5)] transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95 uppercase tracking-widest flex items-center justify-center gap-2"
+                                    {{ count($cart) == 0 ? 'disabled' : '' }}>
+                                    <i data-lucide="shopping-bag" class="w-4 h-4 pointer-events-none"></i>
+                                    <span>Checkout Sekarang</span>
+                                </button>
+                            @else
+                                <button type="button" disabled
+                                    class="w-full bg-gray-800 text-gray-500 font-black text-xs md:text-sm py-4 rounded-2xl cursor-not-allowed transition-all duration-300 uppercase tracking-widest flex items-center justify-center gap-2">
+                                    <i data-lucide="lock" class="w-4 h-4"></i>
+                                    <span>Toko Sedang Tutup</span>
+                                </button>
+                            @endif
                         @else
                             <a href="{{ route('login') }}"
                                 class="w-full bg-gradient-to-r from-brand-cyan to-teal-400 hover:from-teal-400 hover:to-brand-cyan text-[#0f1115] font-black text-xs md:text-sm py-4 rounded-2xl shadow-[0_8px_25px_rgba(78,205,196,0.35)] hover:shadow-[0_12px_35px_rgba(78,205,196,0.5)] transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95 uppercase tracking-widest flex items-center justify-center gap-2">

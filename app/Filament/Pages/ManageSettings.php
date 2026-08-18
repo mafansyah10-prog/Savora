@@ -71,6 +71,25 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
                             ->required(),
                     ])->columns(2),
 
+                Section::make('Status & Jam Operasional Toko')
+                    ->description('Atur status buka/tutup toko serta jam operasional buka dan tutup secara otomatis.')
+                    ->components([
+                        Forms\Components\Toggle::make('is_store_open')
+                            ->label('Buka Toko')
+                            ->helperText('Jika dinonaktifkan, toko akan ditutup secara manual dan pelanggan tidak bisa memesan.')
+                            ->default(true),
+                        Forms\Components\TimePicker::make('store_open_time')
+                            ->label('Jam Buka')
+                            ->seconds(false)
+                            ->nullable()
+                            ->helperText('Kosongkan jika ingin buka 24 jam (sesuai status di atas)'),
+                        Forms\Components\TimePicker::make('store_close_time')
+                            ->label('Jam Tutup')
+                            ->seconds(false)
+                            ->nullable()
+                            ->helperText('Kosongkan jika ingin buka 24 jam (sesuai status di atas)'),
+                    ])->columns(3),
+
                 Section::make('Integrasi Pakasir Payment Gateway')
                     ->description('Pengaturan untuk pembayaran otomatis via Pakasir.')
                     ->components([
