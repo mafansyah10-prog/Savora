@@ -7,6 +7,9 @@ use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 
 class ManageSettings extends Page implements Forms\Contracts\HasForms
@@ -80,11 +83,11 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
                             ->default(true)
                             ->columnSpanFull(),
 
-                        Forms\Components\Tabs::make('OperationalSchedules')
+                        Tabs::make('OperationalSchedules')
                             ->tabs([
-                                Forms\Components\Tabs\Tab::make('Jadwal Mingguan')
+                                Tab::make('Jadwal Mingguan')
                                     ->schema([
-                                        Forms\Components\Grid::make(3)
+                                        Grid::make(3)
                                             ->schema([
                                                 // Monday
                                                 Forms\Components\Toggle::make('weekly_schedule.monday.is_open')
@@ -179,7 +182,7 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
                                             ]),
                                     ]),
 
-                                Forms\Components\Tabs\Tab::make('Jadwal Tanggal Khusus / Hari Libur')
+                                Tab::make('Jadwal Tanggal Khusus / Hari Libur')
                                     ->schema([
                                         Forms\Components\Repeater::make('special_schedules')
                                             ->label('Daftar Tanggal Khusus')
@@ -208,9 +211,9 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
                                             ->columnSpanFull(),
                                     ]),
 
-                                Forms\Components\Tabs\Tab::make('Global (Sederhana)')
+                                Tab::make('Global (Sederhana)')
                                     ->schema([
-                                        Forms\Components\Grid::make(2)
+                                        Grid::make(2)
                                             ->schema([
                                                 Forms\Components\TimePicker::make('store_open_time')
                                                     ->label('Jam Buka Global')
