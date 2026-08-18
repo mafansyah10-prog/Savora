@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Orders\Schemas;
 
 use App\Models\Product;
-use Filament\Forms\Components\Placeholder;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -23,9 +23,9 @@ class OrderForm
                 TextInput::make('customer_phone')
                     ->label('Nomor Telepon')
                     ->required(),
-                Placeholder::make('created_at')
+                TextEntry::make('created_at')
                     ->label('Tanggal & Waktu Pesanan')
-                    ->content(fn ($record) => $record && $record->created_at ? $record->created_at->translatedFormat('d F Y H:i:s') : '—'),
+                    ->state(fn ($record) => $record && $record->created_at ? $record->created_at->translatedFormat('d F Y H:i:s') : '—'),
                 Textarea::make('shipping_address')
                     ->label('Alamat Pengiriman')
                     ->required()
@@ -34,10 +34,10 @@ class OrderForm
                     ->label('Catatan Pelanggan')
                     ->placeholder('Tidak ada catatan')
                     ->columnSpanFull(),
-                Placeholder::make('items_list')
+                TextEntry::make('items_list')
                     ->label('Detail Menu Yang Dipesan')
                     ->columnSpanFull()
-                    ->content(function ($record) {
+                    ->state(function ($record) {
                         if (! $record || empty($record->items)) {
                             return 'Tidak ada item';
                         }
