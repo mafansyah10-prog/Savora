@@ -18,10 +18,6 @@ class Setting extends Model
 
     public function isStoreOpen(): bool
     {
-        if (isset($this->attributes['is_store_open']) && !$this->is_store_open) {
-            return false;
-        }
-
         // Check special date schedules
         $todayDate = now()->format('Y-m-d');
         $specialSchedules = $this->special_schedules ?? [];
@@ -69,10 +65,6 @@ class Setting extends Model
 
     public function getStoreStatusText(): string
     {
-        if (isset($this->attributes['is_store_open']) && !$this->is_store_open) {
-            return 'Tutup (Manual)';
-        }
-
         $todayDate = now()->format('Y-m-d');
         $specialSchedules = $this->special_schedules ?? [];
         $todaySpecial = collect($specialSchedules)->firstWhere('date', $todayDate);

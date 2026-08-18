@@ -101,12 +101,6 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
                 Section::make('Status & Jam Operasional Toko')
                     ->description('Atur status buka/tutup toko serta jam operasional buka dan tutup secara otomatis.')
                     ->components([
-                        Forms\Components\Toggle::make('is_store_open')
-                            ->label('Buka Toko')
-                            ->helperText('Jika dinonaktifkan, toko akan ditutup secara manual dan pelanggan tidak bisa memesan.')
-                            ->default(true)
-                            ->columnSpanFull(),
-
                         Tabs::make('OperationalSchedules')
                             ->tabs([
                                 Tab::make('Jadwal Mingguan')
