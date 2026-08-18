@@ -43,11 +43,35 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
     public function mount(): void
     {
         $setting = Setting::first();
-        if ($setting) {
-            $this->form->fill($setting->toArray());
+        $data = $setting ? $setting->toArray() : [];
+
+        // Ensure default weekly schedule values if empty
+        if (empty($data['weekly_schedule'])) {
+            $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            $weeklySchedule = [];
+            foreach ($days as $day) {
+                $weeklySchedule[$day] = [
+                    'is_open' => true,
+                    'open_time' => null,
+                    'close_time' => null,
+                ];
+            }
+            $data['weekly_schedule'] = $weeklySchedule;
         } else {
-            $this->form->fill();
+            // Also ensure each day is explicitly filled if missing keys
+            $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            foreach ($days as $day) {
+                if (!isset($data['weekly_schedule'][$day])) {
+                    $data['weekly_schedule'][$day] = [
+                        'is_open' => true,
+                        'open_time' => null,
+                        'close_time' => null,
+                    ];
+                }
+            }
         }
+
+        $this->form->fill($data);
     }
 
     public function form(Schema $schema): Schema
