@@ -255,12 +255,21 @@
                 <h2 class="text-xl md:text-3xl lg:text-4xl font-bold font-serif text-white mt-1">
                     @if(request('search'))
                         Hasil Pencarian: "{{ request('search') }}"
+                    @elseif(request('category'))
+                        @php
+                            $categoryName = $categories->where('slug', request('category'))->first()->name ?? 'Kategori';
+                        @endphp
+                        @if(request('filter') === 'new')
+                            {{ $categoryName }} - Terbaru
+                        @elseif(request('filter') === 'popular')
+                            {{ $categoryName }} - Terlaris
+                        @else
+                            Kategori "{{ $categoryName }}"
+                        @endif
                     @elseif(request('filter') === 'new')
                         Koleksi Hidangan Baru
                     @elseif(request('filter') === 'popular')
                         Menu Paling Terlaris
-                    @elseif(request('category'))
-                        Kategori "{{ $categories->where('slug', request('category'))->first()->name ?? 'Kategori' }}"
                     @else
                         Menu Pilihan Terbaik
                     @endif
