@@ -649,41 +649,46 @@
 
                 const newShopByCategory = doc.getElementById('shop-by-category');
                 if (newShopByCategory && shopByCategory) {
-                    // Update the Reset button visibility
-                    const headerFlex = shopByCategory.querySelector('.flex.items-center.justify-between');
-                    const newReset = newShopByCategory.querySelector('a[href*="home"], a[href="/"]');
-                    if (headerFlex) {
-                        const existingReset = headerFlex.querySelector('a');
-                        if (existingReset) existingReset.remove();
-                        if (newReset) {
-                            headerFlex.appendChild(newReset);
-                        }
-                    }
-                    
-                    // Update active states of existing category pills without replacing them in DOM
                     const currentUrl = new URL(url, window.location.origin);
                     const categoryParam = currentUrl.searchParams.get('category');
+                    const oldUrl = new URL(window.location.href);
+                    const oldCategoryParam = oldUrl.searchParams.get('category');
                     
-                    shopByCategory.querySelectorAll('.cat-pill-reveal').forEach(a => {
-                        const aUrl = new URL(a.href);
-                        const aCategory = aUrl.searchParams.get('category');
-                        const icon = a.querySelector('i');
-                        
-                        if (aCategory === categoryParam) {
-                            a.className = "cat-pill-reveal flex-shrink-0 flex flex-col items-center justify-center w-20 min-h-[5.5rem] sm:w-28 sm:min-h-[6.5rem] lg:w-32 lg:min-h-[7.5rem] py-3 sm:py-4 rounded-xl sm:rounded-2xl lg:rounded-3xl border active:scale-95 group category-active-card bg-gold-500 border-gold-400 text-black shadow-lg shadow-gold-500/20 active-category-pulse scale-[1.03] revealed";
-                            if (icon) {
-                                icon.classList.remove('text-[#e2c86e]');
-                                icon.classList.add('text-black');
-                            }
-                        } else {
-                            a.className = "cat-pill-reveal flex-shrink-0 flex flex-col items-center justify-center w-20 min-h-[5.5rem] sm:w-28 sm:min-h-[6.5rem] lg:w-32 lg:min-h-[7.5rem] py-3 sm:py-4 rounded-xl sm:rounded-2xl lg:rounded-3xl border active:scale-95 group category-hover-card bg-[#16181c]/60 border-gray-800/80 text-gray-300 revealed";
-                            if (icon) {
-                                icon.classList.remove('text-black');
-                                icon.classList.add('text-[#e2c86e]');
+                    // Only update category bar classes/Reset button if the category filter actually changed
+                    if (categoryParam !== oldCategoryParam) {
+                        // Update the Reset button visibility
+                        const headerFlex = shopByCategory.querySelector('.flex.items-center.justify-between');
+                        const newReset = newShopByCategory.querySelector('a[href*="home"], a[href="/"]');
+                        if (headerFlex) {
+                            const existingReset = headerFlex.querySelector('a');
+                            if (existingReset) existingReset.remove();
+                            if (newReset) {
+                                headerFlex.appendChild(newReset);
                             }
                         }
-                    });
-                    requestAnimationFrame(() => revealPills());
+                        
+                        // Update active states of existing category pills without replacing them in DOM
+                        shopByCategory.querySelectorAll('.cat-pill-reveal').forEach(a => {
+                            const aUrl = new URL(a.href);
+                            const aCategory = aUrl.searchParams.get('category');
+                            const icon = a.querySelector('i');
+                            
+                            if (aCategory === categoryParam) {
+                                a.className = "cat-pill-reveal flex-shrink-0 flex flex-col items-center justify-center w-20 min-h-[5.5rem] sm:w-28 sm:min-h-[6.5rem] lg:w-32 lg:min-h-[7.5rem] py-3 sm:py-4 rounded-xl sm:rounded-2xl lg:rounded-3xl border active:scale-95 group category-active-card bg-gold-500 border-gold-400 text-black shadow-lg shadow-gold-500/20 active-category-pulse scale-[1.03] revealed";
+                                if (icon) {
+                                    icon.classList.remove('text-[#e2c86e]');
+                                    icon.classList.add('text-black');
+                                }
+                            } else {
+                                a.className = "cat-pill-reveal flex-shrink-0 flex flex-col items-center justify-center w-20 min-h-[5.5rem] sm:w-28 sm:min-h-[6.5rem] lg:w-32 lg:min-h-[7.5rem] py-3 sm:py-4 rounded-xl sm:rounded-2xl lg:rounded-3xl border active:scale-95 group category-hover-card bg-[#16181c]/60 border-gray-800/80 text-gray-300 revealed";
+                                if (icon) {
+                                    icon.classList.remove('text-black');
+                                    icon.classList.add('text-[#e2c86e]');
+                                }
+                            }
+                        });
+                        requestAnimationFrame(() => revealPills());
+                    }
                 }
 
                 const newMenuSection = doc.getElementById('menu-section');
@@ -772,7 +777,31 @@
 
             if (url.origin === window.location.origin && (url.pathname === '/' || url.pathname === '/index.php')) {
                 e.preventDefault();
-                loadContent(link.href);
+                
+                // Build the final target URL by preserving relevant query parameters
+                const targetUrl = new URL(link.href);
+                const currentUrl = new URL(window.location.href);
+                
+                // If clicking a filter inside #menu-section, preserve current category
+                if (link.closest('#menu-section a')) {
+                    const currentCategory = currentUrl.searchParams.get('category');
+                    if (currentCategory) {
+                        targetUrl.searchParams.set('category', currentCategory);
+                    }
+                }
+                
+                // If clicking a category link, preserve current filter
+                if (link.closest('#shop-by-category a')) {
+                    // Check if it is a reset link (does not have a category parameter)
+                    if (targetUrl.searchParams.has('category')) {
+                        const currentFilter = currentUrl.searchParams.get('filter');
+                        if (currentFilter) {
+                            targetUrl.searchParams.set('filter', currentFilter);
+                        }
+                    }
+                }
+
+                loadContent(targetUrl.toString());
 
                 // Smooth scroll to menu-section if clicked from header
                 if (link.classList.contains('desktop-nav-link')) {
