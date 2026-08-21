@@ -671,7 +671,7 @@
                         shopByCategory.querySelectorAll('.cat-pill-reveal').forEach(a => {
                             const aUrl = new URL(a.href);
                             const aCategory = aUrl.searchParams.get('category');
-                            const icon = a.querySelector('i');
+                            const icon = a.querySelector('i, svg');
                             
                             if (aCategory === categoryParam) {
                                 a.className = "cat-pill-reveal flex-shrink-0 flex flex-col items-center justify-center w-20 min-h-[5.5rem] sm:w-28 sm:min-h-[6.5rem] lg:w-32 lg:min-h-[7.5rem] py-3 sm:py-4 rounded-xl sm:rounded-2xl lg:rounded-3xl border active:scale-95 group category-active-card bg-gold-500 border-gold-400 text-black shadow-lg shadow-gold-500/20 active-category-pulse scale-[1.03] revealed";
