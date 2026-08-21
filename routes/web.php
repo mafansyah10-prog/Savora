@@ -73,21 +73,9 @@ Route::get('/', function (Request $request) {
     }
 
     if ($sortFilter === 'new') {
-        // Cek jika ada yang dicentang manual
-        $hasManual = (clone $query)->where('is_new_manual', true)->exists();
-        if ($hasManual) {
-            $query->where('is_new_manual', true)->latest();
-        } else {
-            $query->latest(); // Fallback ke produk terbaru secara umum
-        }
+        $query->orderBy('is_new_manual', 'desc')->latest();
     } elseif ($sortFilter === 'popular') {
-        // Cek jika ada yang dicentang manual
-        $hasPopular = (clone $query)->where('is_popular_manual', true)->exists();
-        if ($hasPopular) {
-            $query->where('is_popular_manual', true)->orderBy('sales_count', 'desc');
-        } else {
-            $query->orderBy('sales_count', 'desc'); // Fallback ke produk terlaris berdasarkan angka penjualan
-        }
+        $query->orderBy('is_popular_manual', 'desc')->orderBy('sales_count', 'desc');
     } else {
         $query->latest();
     }
