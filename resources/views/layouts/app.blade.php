@@ -1262,10 +1262,15 @@
                 <div class="relative w-full">
                     <img src="{{ asset('storage/' . $globalSetting->promo_popup_image) }}" alt="Promo Banner" class="w-full h-auto object-contain block max-h-[85vh] mx-auto rounded-3xl">
                     
-                    <!-- Close Button -->
-                    <button @click="open = false" class="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white p-2.5 rounded-full backdrop-blur-md border border-white/10 transition shadow-lg">
-                        <i data-lucide="x" class="w-5 h-5"></i>
-                    </button>
+                    <!-- Close & Countdown Button -->
+                    <div class="absolute top-4 right-4 flex items-center gap-2">
+                        <div class="bg-black/60 text-white px-3 py-1.5 rounded-full backdrop-blur-md border border-white/10 text-xs font-black tracking-wider shadow-lg flex items-center justify-center min-w-[36px]">
+                            <span x-text="Math.ceil(progress / 100 * duration)"></span>s
+                        </div>
+                        <button @click="open = false" class="bg-black/60 hover:bg-black/80 text-white p-2 rounded-full backdrop-blur-md border border-white/10 transition shadow-lg flex items-center justify-center">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Autoclose Progress Bar -->
