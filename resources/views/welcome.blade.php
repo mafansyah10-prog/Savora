@@ -775,7 +775,7 @@
                 return;
             }
 
-            if (url.origin === window.location.origin && (url.pathname === '/' || url.pathname === '/index.php')) {
+            if (url.origin === window.location.origin && (url.pathname === window.location.pathname || url.pathname === '/' || url.pathname === '/index.php')) {
                 e.preventDefault();
                 
                 // Build the final target URL by preserving relevant query parameters
@@ -783,15 +783,15 @@
                 const currentUrl = new URL(window.location.href);
                 
                 // If clicking a filter inside #menu-section, preserve current category
-                if (link.closest('#menu-section a')) {
+                if (link.closest('#menu-section')) {
                     const currentCategory = currentUrl.searchParams.get('category');
                     if (currentCategory) {
                         targetUrl.searchParams.set('category', currentCategory);
                     }
                 }
                 
-                // If clicking a category link, preserve current filter
-                if (link.closest('#shop-by-category a')) {
+                // If clicking a category link inside #shop-by-category, preserve current filter
+                if (link.closest('#shop-by-category')) {
                     // Check if it is a reset link (does not have a category parameter)
                     if (targetUrl.searchParams.has('category')) {
                         const currentFilter = currentUrl.searchParams.get('filter');
