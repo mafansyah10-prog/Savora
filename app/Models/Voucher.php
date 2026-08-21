@@ -111,9 +111,9 @@ class Voucher extends Model
         }
 
         if ($this->type === 'fixed') {
-            return $prefix.'Potongan Rp '.number_format($this->value, 0, ',', '.').$rankLabel;
+            return $prefix.'Potongan Rp '.number_format((float) $this->value, 0, ',', '.').$rankLabel;
         } else {
-            return $prefix.'Diskon '.number_format($this->value, 0).'%'.$rankLabel;
+            return $prefix.'Diskon '.number_format((float) $this->value, 0).'%'.$rankLabel;
         }
     }
 

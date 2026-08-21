@@ -48,6 +48,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
     <style>
+        [x-cloak] { display: none !important; }
         
         :root {
             --color-brand-dark: #0f1115;
@@ -316,12 +317,150 @@
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-brand-dark text-white font-sans antialiased flex flex-col min-h-screen">
-    @if(!\App\Models\Setting::getGlobal()->isStoreOpen())
-    <div class="bg-gradient-to-r from-red-900/90 via-red-800/90 to-orange-950/95 backdrop-blur-md text-white text-[9px] sm:text-xs font-black uppercase tracking-widest py-2.5 px-4 text-center flex items-center justify-center gap-2 border-b border-red-500/20 z-[90]">
-        <i data-lucide="lock" class="w-3.5 h-3.5 text-red-400"></i>
-        <span>Toko Sedang Tutup. Anda tidak dapat melakukan pemesanan saat ini.</span>
+    <script id="store-schedule-settings" type="application/json">
+    {
+        "is_store_open": {{ \App\Models\Setting::getGlobal()->is_store_open ? 'true' : 'false' }},
+        "store_hours_mode": "{{ \App\Models\Setting::getGlobal()->store_hours_mode ?? 'global' }}",
+        "store_open_time": "{{ \App\Models\Setting::getGlobal()->store_open_time }}",
+        "store_close_time": "{{ \App\Models\Setting::getGlobal()->store_close_time }}",
+        "weekly_schedule": {!! json_encode(\App\Models\Setting::getGlobal()->weekly_schedule) !!},
+        "special_schedules": {!! json_encode(\App\Models\Setting::getGlobal()->special_schedules) !!}
+    }
+    </script>
+    <script>
+    function storeStatusTracker() {
+        return {
+            isOpen: true,
+            statusText: 'Memuat status toko...',
+            settings: {},
+            init() {
+                this.settings = JSON.parse(document.getElementById('store-schedule-settings').textContent);
+                this.checkStatus();
+                setInterval(() => this.checkStatus(), 1000);
+            },
+            checkStatus() {
+                if (!this.settings.is_store_open) {
+                    this.isOpen = false;
+                    this.statusText = 'Toko Sedang Tutup. Anda tidak dapat melakukan pemesanan saat ini.';
+                    return;
+                }
+
+                let now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
+                let yyyy = now.getFullYear();
+                let mm = String(now.getMonth() + 1).padStart(2, '0');
+                let dd = String(now.getDate()).padStart(2, '0');
+                let todayDate = `${yyyy}-${mm}-${dd}`;
+                
+                let hours = String(now.getHours()).padStart(2, '0');
+                let minutes = String(now.getMinutes()).padStart(2, '0');
+                let seconds = String(now.getSeconds()).padStart(2, '0');
+                let currentTime = `${hours}:${minutes}:${seconds}`;
+
+                // 1. Check special schedules
+                let specialSchedules = this.settings.special_schedules || [];
+                let todaySpecial = specialSchedules.find(s => s.date === todayDate);
+
+                if (todaySpecial) {
+                    if (!todaySpecial.is_open) {
+                        this.isOpen = false;
+                        this.statusText = todaySpecial.note ? `Tutup: ${todaySpecial.note}` : 'Toko Tutup (Hari Khusus)';
+                        return;
+                    }
+                    if (todaySpecial.open_time && todaySpecial.close_time) {
+                        let open = todaySpecial.open_time;
+                        let close = todaySpecial.close_time;
+                        let isWithin = this.isTimeWithinRange(currentTime, open, close);
+                        this.isOpen = isWithin;
+                        let formattedHours = `${open.substring(0, 5)} - ${close.substring(0, 5)}`;
+                        if (isWithin) {
+                            this.statusText = todaySpecial.note ? `Buka • Jam Buka Khusus: ${formattedHours} (${todaySpecial.note})` : `Buka • Jam Buka Khusus: ${formattedHours}`;
+                        } else {
+                            this.statusText = `Tutup • Buka Khusus Hari Ini: ${formattedHours}`;
+                        }
+                        return;
+                    }
+                    this.isOpen = true;
+                    this.statusText = todaySpecial.note ? `Buka (${todaySpecial.note})` : 'Buka';
+                    return;
+                }
+
+                // 2. Check weekly schedule
+                let mode = this.settings.store_hours_mode || 'global';
+                if (mode === 'weekly') {
+                    let daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                    let dayOfWeek = daysOfWeek[now.getDay()];
+                    let weeklySchedule = this.settings.weekly_schedule || {};
+                    let daySchedule = weeklySchedule[dayOfWeek];
+
+                    if (daySchedule) {
+                        if (!daySchedule.is_open) {
+                            this.isOpen = false;
+                            let daysIndo = {
+                                'monday': 'Senin', 'tuesday': 'Selasa', 'wednesday': 'Rabu',
+                                'thursday': 'Kamis', 'friday': 'Jumat', 'saturday': 'Sabtu', 'sunday': 'Minggu'
+                            };
+                            this.statusText = `Tutup (Hari ${daysIndo[dayOfWeek] || dayOfWeek})`;
+                            return;
+                        }
+                        if (daySchedule.open_time && daySchedule.close_time) {
+                            let open = daySchedule.open_time;
+                            let close = daySchedule.close_time;
+                            let isWithin = this.isTimeWithinRange(currentTime, open, close);
+                            this.isOpen = isWithin;
+                            let formattedHours = `${open.substring(0, 5)} - ${close.substring(0, 5)}`;
+                            if (isWithin) {
+                                this.statusText = `Buka • Jam Operasional: ${formattedHours}`;
+                            } else {
+                                this.statusText = `Tutup • Buka Jam: ${open.substring(0, 5)}`;
+                            }
+                            return;
+                        }
+                    }
+                }
+
+                // 3. Global settings
+                if (this.settings.store_open_time && this.settings.store_close_time) {
+                    let open = this.settings.store_open_time;
+                    let close = this.settings.store_close_time;
+                    let isWithin = this.isTimeWithinRange(currentTime, open, close);
+                    this.isOpen = isWithin;
+                    let formattedHours = `${open.substring(0, 5)} - ${close.substring(0, 5)}`;
+                    if (isWithin) {
+                        this.statusText = `Buka • Jam Operasional: ${formattedHours}`;
+                    } else {
+                        this.statusText = `Tutup • Buka Jam: ${open.substring(0, 5)}`;
+                    }
+                    return;
+                }
+
+                this.isOpen = true;
+                this.statusText = 'Buka';
+            },
+            isTimeWithinRange(now, open, close) {
+                if (open <= close) {
+                    return now >= open && now <= close;
+                } else {
+                    return now >= open || now <= close;
+                }
+            }
+        };
+    }
+    </script>
+    <div x-data="storeStatusTracker()" x-cloak>
+        <!-- Banner Tutup -->
+        <div x-show="!isOpen" class="bg-gradient-to-r from-red-900/90 via-red-800/90 to-orange-950/95 backdrop-blur-md text-white text-[9px] sm:text-xs font-black uppercase tracking-widest py-2.5 px-4 text-center flex items-center justify-center gap-2 border-b border-red-500/20 z-[90]">
+            <i data-lucide="lock" class="w-3.5 h-3.5 text-red-400"></i>
+            <span x-text="statusText"></span>
+        </div>
+        <!-- Banner Buka -->
+        <div x-show="isOpen" class="bg-gradient-to-r from-teal-900/90 via-emerald-800/90 to-teal-950/95 backdrop-blur-md text-white text-[9px] sm:text-xs font-black uppercase tracking-widest py-2 px-4 text-center flex items-center justify-center gap-2 border-b border-emerald-500/20 z-[90]">
+            <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span x-text="statusText"></span>
+        </div>
     </div>
-    @endif
     {{-- Global Toast Notification --}}
     <div x-data="{ 
              toastOpen: false, 
@@ -1070,5 +1209,146 @@
             });
         });
     </script>
+
+    @php
+        $globalSetting = \App\Models\Setting::getGlobal();
+    @endphp
+
+    @if($globalSetting->promo_popup_is_active && $globalSetting->promo_popup_image)
+        <!-- Product Promo Popup -->
+        <div x-data="{ 
+                open: false, 
+                duration: {{ $globalSetting->promo_popup_duration_seconds ?? 7 }},
+                progress: 100,
+                init() {
+                    if (sessionStorage.getItem('promo_popup_shown') !== 'true') {
+                        setTimeout(() => {
+                            this.open = true;
+                            sessionStorage.setItem('promo_popup_shown', 'true');
+                            this.startCountdown();
+                        }, 1500);
+                    }
+                },
+                startCountdown() {
+                    let start = Date.now();
+                    let limit = this.duration * 1000;
+                    let interval = setInterval(() => {
+                        if (!this.open) {
+                            clearInterval(interval);
+                            return;
+                        }
+                        let elapsed = Date.now() - start;
+                        this.progress = Math.max(0, 100 - (elapsed / limit * 100));
+                        if (elapsed >= limit) {
+                            this.open = false;
+                            clearInterval(interval);
+                        }
+                    }, 50);
+                }
+             }"
+             x-show="open"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             class="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+             style="display: none;">
+            
+            <div class="relative max-w-lg w-[95vw] sm:w-[85vw] md:w-[70vw] lg:w-[50vw] xl:w-[40vw] overflow-hidden rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.8)] mx-auto">
+                
+                <!-- Full Image Only -->
+                <div class="relative w-full">
+                    <img src="{{ asset('storage/' . $globalSetting->promo_popup_image) }}" alt="Promo Banner" class="w-full h-auto object-contain block max-h-[85vh] mx-auto rounded-3xl">
+                    
+                    <!-- Close Button -->
+                    <button @click="open = false" class="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white p-2.5 rounded-full backdrop-blur-md border border-white/10 transition shadow-lg">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Autoclose Progress Bar -->
+                <div class="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-brand-cyan to-gold-500 transition-all duration-75" :style="{ width: progress + '%' }"></div>
+            </div>
+        </div>
+    @endif
+
+    @auth
+        <!-- Real-time Account Block Checker -->
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                let checkingBlock = false;
+                setInterval(() => {
+                    if (checkingBlock) return;
+                    checkingBlock = true;
+                    fetch('{{ route('user.check-status') }}', {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        checkingBlock = false;
+                        if (response.status === 403) {
+                            return response.json().then(data => {
+                                if (data.blocked) {
+                                    showBlockedAlert(data.message || 'Akun Anda telah diblokir.');
+                                }
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        checkingBlock = false;
+                        console.error('Error checking account status:', error);
+                    });
+                }, 10000); // Check every 10 seconds
+
+                function showBlockedAlert(message) {
+                    let modal = document.createElement('div');
+                    modal.style.position = 'fixed';
+                    modal.style.top = '0';
+                    modal.style.left = '0';
+                    modal.style.width = '100%';
+                    modal.style.height = '100%';
+                    modal.style.backgroundColor = 'rgba(15, 17, 23, 0.95)';
+                    modal.style.backdropFilter = 'blur(12px)';
+                    modal.style.zIndex = '9999999';
+                    modal.style.display = 'flex';
+                    modal.style.alignItems = 'center';
+                    modal.style.justifyContent = 'center';
+                    modal.style.fontFamily = 'sans-serif';
+                    modal.style.color = '#fff';
+
+                    modal.innerHTML = `
+                        <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 40px 32px; max-width: 480px; width: 90%; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.6); transform: scale(0.9); transition: transform 0.3s ease;">
+                            <div style="font-size: 80px; margin-bottom: 24px; animation: heartbeat 2s infinite;">🚫</div>
+                            <h2 style="font-size: 26px; font-weight: 800; margin-bottom: 16px; color: #f43f5e; letter-spacing: -0.5px;">Akses Akun Terblokir</h2>
+                            <p style="font-size: 16px; color: #94a3b8; line-height: 1.6; margin-bottom: 32px;">${message}</p>
+                            <button onclick="window.location.href='{{ route('login') }}'" style="background: linear-gradient(135deg, #f43f5e, #be123c); color: #fff; border: none; padding: 14px 28px; font-size: 16px; font-weight: 700; border-radius: 12px; cursor: pointer; width: 100%; box-shadow: 0 4px 14px rgba(244, 63, 94, 0.4); transition: transform 0.2s, background 0.2s;">
+                                Kembali ke Halaman Login
+                            </button>
+                        </div>
+                    `;
+
+                    document.body.appendChild(modal);
+                    document.body.style.overflow = 'hidden';
+                    
+                    if (navigator.vibrate) {
+                        navigator.vibrate([200, 100, 200]);
+                    }
+                }
+            });
+        </script>
+        <style>
+            @keyframes heartbeat {
+                0% { transform: scale(1); }
+                14% { transform: scale(1.1); }
+                28% { transform: scale(1); }
+                42% { transform: scale(1.1); }
+                70% { transform: scale(1); }
+            }
+        </style>
+    @endauth
 </body>
 </html>

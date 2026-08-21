@@ -29,6 +29,7 @@ class User extends Authenticatable implements FilamentUser
         'rank_notified_at',
         'is_blocked',
         'blocked_until',
+        'birth_date',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -43,6 +44,7 @@ class User extends Authenticatable implements FilamentUser
             'rank_notified_at' => 'datetime',
             'is_blocked' => 'boolean',
             'blocked_until' => 'datetime',
+            'birth_date' => 'date',
         ];
     }
 

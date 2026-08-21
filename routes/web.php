@@ -13,6 +13,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Models\Voucher;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/search/live', function (Request $request) {
@@ -183,11 +184,18 @@ Route::post('/webhook/pakasir', [PakasirWebhookController::class, 'handleNotific
 Route::post('/webhook/midtrans', [MidtransWebhookController::class, 'handleNotification']);
 
 Route::get('/logout-cepat', function () {
-    auth()->logout();
+    Auth::logout();
     session()->invalidate();
     session()->regenerateToken();
 
     return redirect('/admin');
 });
+
+Route::get('/user/check-status', function (Request $request) {
+    if (!Auth::check()) {
+        return response()->json(['blocked' => false, 'authenticated' => false]);
+    }
+    return response()->json(['blocked' => false, 'authenticated' => true]);
+})->name('user.check-status');
 
 require __DIR__.'/auth.php';

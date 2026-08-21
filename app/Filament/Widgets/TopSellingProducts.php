@@ -21,7 +21,7 @@ class TopSellingProducts extends BaseWidget
     {
         return $table
             ->query(
-                Product::query()
+                fn () => Product::query()
                     ->with('category')
                     ->orderBy('sales_count', 'desc')
                     ->limit(5)
@@ -30,7 +30,7 @@ class TopSellingProducts extends BaseWidget
                 Tables\Columns\ImageColumn::make('image')
                     ->label('')
                     ->circular()
-                    ->size(40)
+                    ->imageSize(40)
                     ->defaultImageUrl(fn () => 'https://ui-avatars.com/api/?name=Product&background=f97316&color=fff'),
 
                 Tables\Columns\TextColumn::make('name')

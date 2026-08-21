@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Setting;
 use App\Models\ShippingZone;
 use App\Models\User;
 use App\Models\Voucher;
@@ -155,7 +156,7 @@ class CartController extends Controller
         }
 
         // Filter out vouchers that have exceeded usage limits
-        $vouchers = $vouchers->filter(function ($v) {
+        $vouchers = $vouchers->filter(function (Voucher $v) {
             if ($v->usage_limit !== null && $v->orders()->count() >= $v->usage_limit) {
                 return false;
             }
@@ -186,11 +187,12 @@ class CartController extends Controller
      */
     public function add(Request $request)
     {
-        if (!\App\Models\Setting::getGlobal()->isStoreOpen()) {
+        if (! Setting::getGlobal()->isStoreOpen()) {
             $msg = 'Maaf, toko kami saat ini sedang tutup. Pemesanan tidak dapat dilakukan.';
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => $msg], 422);
             }
+
             return redirect()->back()->with('error', $msg);
         }
 
@@ -544,7 +546,7 @@ class CartController extends Controller
      */
     public function checkout(Request $request)
     {
-        if (!\App\Models\Setting::getGlobal()->isStoreOpen()) {
+        if (! Setting::getGlobal()->isStoreOpen()) {
             return redirect()->back()->with('error', 'Maaf, toko kami saat ini sedang tutup. Silakan melakukan checkout kembali setelah toko buka.');
         }
 

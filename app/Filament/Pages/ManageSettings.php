@@ -6,8 +6,8 @@ use App\Models\Setting;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
@@ -61,7 +61,7 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
             // Also ensure each day is explicitly filled if missing keys
             $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
             foreach ($days as $day) {
-                if (!isset($data['weekly_schedule'][$day])) {
+                if (! isset($data['weekly_schedule'][$day])) {
                     $data['weekly_schedule'][$day] = [
                         'is_open' => true,
                         'open_time' => null,
@@ -105,6 +105,17 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
                             ->label('Buka Toko')
                             ->helperText('Jika dinonaktifkan, toko akan ditutup secara manual dan pelanggan tidak bisa memesan.')
                             ->default(true)
+                            ->columnSpanFull(),
+
+                        Forms\Components\Select::make('store_hours_mode')
+                            ->label('Mode Jam Operasional')
+                            ->options([
+                                'global' => 'Global (Sederhana)',
+                                'weekly' => 'Jadwal Mingguan',
+                            ])
+                            ->helperText('Pilih metode penentuan jam operasional yang aktif.')
+                            ->default('global')
+                            ->required()
                             ->columnSpanFull(),
 
                         Tabs::make('OperationalSchedules')
@@ -249,7 +260,7 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
                                                     ->seconds(false)
                                                     ->nullable()
                                                     ->helperText('Hanya digunakan jika jadwal mingguan kosong'),
-                                            ])
+                                            ]),
                                     ]),
                             ])
                             ->columnSpanFull(),
@@ -377,6 +388,82 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
                             ->minValue(1)
                             ->visible(fn ($get) => $get('new_user_voucher_is_active'))
                             ->helperText('Jumlah maksimal voucher pendaftaran ini dapat digunakan oleh setiap pengguna baru (biasanya diisi 1)'),
+                    ])->columns(2),
+
+                Section::make('Voucher Hari Ulang Tahun Pengguna')
+                    ->description('Pengaturan voucher otomatis yang didapatkan ketika customer sedang berulang tahun.')
+                    ->components([
+                        Forms\Components\Toggle::make('birthday_voucher_is_active')
+                            ->label('Aktifkan Voucher Ulang Tahun')
+                            ->helperText('Jika diaktifkan, pengguna yang berulang tahun akan mendapatkan voucher promo secara otomatis.')
+                            ->default(true)
+                            ->live()
+                            ->columnSpanFull(),
+
+                        Forms\Components\Select::make('birthday_voucher_type')
+                            ->label('Tipe Potongan')
+                            ->options([
+                                'fixed' => 'Nominal Tetap (Rupiah)',
+                                'percent' => 'Persentase (%)',
+                            ])
+                            ->required()
+                            ->default('fixed')
+                            ->visible(fn ($get) => $get('birthday_voucher_is_active'))
+                            ->live(),
+
+                        Forms\Components\TextInput::make('birthday_voucher_value')
+                            ->label('Nilai Potongan')
+                            ->numeric()
+                            ->required()
+                            ->minValue(1)
+                            ->visible(fn ($get) => $get('birthday_voucher_is_active'))
+                            ->helperText(fn ($get) => $get('birthday_voucher_type') === 'percent' ? 'Masukkan angka persentase (1 - 100)' : 'Masukkan nominal rupiah potongan'),
+
+                        Forms\Components\TextInput::make('birthday_voucher_min_order_amount')
+                            ->label('Minimal Pembelian (Rupiah)')
+                            ->numeric()
+                            ->required()
+                            ->minValue(0)
+                            ->visible(fn ($get) => $get('birthday_voucher_is_active'))
+                            ->helperText('Batas minimum total belanja agar voucher ini dapat digunakan'),
+
+                        Forms\Components\TextInput::make('birthday_voucher_expires_in_days')
+                            ->label('Masa Berlaku Voucher (Hari)')
+                            ->numeric()
+                            ->required()
+                            ->minValue(1)
+                            ->visible(fn ($get) => $get('birthday_voucher_is_active'))
+                            ->helperText('Jumlah hari voucher tetap aktif setelah diterbitkan saat hari ulang tahun'),
+                    ])->columns(2),
+
+                 Section::make('Popup Promosi Halaman Utama')
+                    ->description('Tampilkan popup promo berupa gambar banner pilihan ketika customer pertama kali membuka website.')
+                    ->components([
+                        Forms\Components\Toggle::make('promo_popup_is_active')
+                            ->label('Aktifkan Popup Promosi')
+                            ->helperText('Jika diaktifkan, banner gambar promo akan muncul sebagai popup saat customer membuka web.')
+                            ->default(false)
+                            ->live()
+                            ->columnSpanFull(),
+
+                        Forms\Components\FileUpload::make('promo_popup_image')
+                            ->label('Gambar Banner Popup')
+                            ->helperText('Unggah gambar/banner promo yang akan ditampilkan secara penuh pada popup.')
+                            ->image()
+                            ->directory('promo')
+                            ->required(fn ($get) => $get('promo_popup_is_active'))
+                            ->visible(fn ($get) => $get('promo_popup_is_active'))
+                            ->columnSpanFull(),
+
+                        Forms\Components\TextInput::make('promo_popup_duration_seconds')
+                            ->label('Durasi Tampil Popup (Detik)')
+                            ->numeric()
+                            ->required()
+                            ->minValue(3)
+                            ->maxValue(30)
+                            ->default(7)
+                            ->visible(fn ($get) => $get('promo_popup_is_active'))
+                            ->helperText('Jumlah detik sebelum popup otomatis menutup sendiri (misal: 7 detik)'),
                     ])->columns(2),
 
                 Section::make('Pengaturan Batas Minimal Pangkat Loyalitas')

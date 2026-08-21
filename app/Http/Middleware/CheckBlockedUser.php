@@ -14,6 +14,13 @@ class CheckBlockedUser
             $message = Auth::user()->getBlockedMessage();
             Auth::logout();
 
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'blocked' => true,
+                    'message' => $message,
+                ], 403);
+            }
+
             return redirect()->route('login')->withErrors([
                 'email' => $message,
             ]);

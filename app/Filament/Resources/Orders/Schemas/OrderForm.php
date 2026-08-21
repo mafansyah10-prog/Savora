@@ -3,10 +3,10 @@
 namespace App\Filament\Resources\Orders\Schemas;
 
 use App\Models\Product;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;

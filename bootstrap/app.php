@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'webhook/midtrans',
         ]);
         $middleware->appendToGroup('web', CheckBlockedUser::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\CheckBirthdayVoucher::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (HttpException $e, Request $request) {

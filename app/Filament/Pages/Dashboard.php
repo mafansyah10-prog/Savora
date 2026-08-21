@@ -3,10 +3,10 @@
 namespace App\Filament\Pages;
 
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Placeholder;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 
 class Dashboard extends BaseDashboard
@@ -36,9 +36,7 @@ class Dashboard extends BaseDashboard
                     ->compact()
                     ->columnSpan(2),
 
-                Placeholder::make('greeting')
-                    ->hiddenLabel()
-                    ->content(view('filament.widgets.greeting-widget'))
+                View::make('filament.widgets.greeting-widget')
                     ->columnSpan(1),
             ])
             ->columns(3);

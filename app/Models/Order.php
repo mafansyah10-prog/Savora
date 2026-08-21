@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use App\Filament\Resources\OrderResource;
-use Filament\Notifications\Actions\Action;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class Order extends Model
 {
@@ -40,12 +40,12 @@ class Order extends Model
                         ->actions([
                             Action::make('view')
                                 ->label('Lihat Detail')
-                                ->url(OrderResource::getUrl('edit', ['record' => $order])),
+                                ->url(url('/admin/orders/'.$order->id.'/edit')),
                         ])
-                        ->sendToDatabase($admin);
+                        ->sendToDatabase($admin, isEventDispatched: true);
                 }
             } catch (\Throwable $e) {
-                // Ignore silent notification errors
+                Log::error('Gagal mengirim notifikasi pesanan baru: '.$e->getMessage(), ['exception' => $e]);
             }
         });
 
@@ -74,12 +74,12 @@ class Order extends Model
                             ->actions([
                                 Action::make('view')
                                     ->label('Lihat Detail')
-                                    ->url(OrderResource::getUrl('edit', ['record' => $order])),
+                                    ->url(url('/admin/orders/'.$order->id.'/edit')),
                             ])
-                            ->sendToDatabase($admin);
+                            ->sendToDatabase($admin, isEventDispatched: true);
                     }
                 } catch (\Throwable $e) {
-                    // Ignore silent notification errors
+                    Log::error('Gagal mengirim notifikasi pesanan lunas: '.$e->getMessage(), ['exception' => $e]);
                 }
             }
 

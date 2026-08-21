@@ -19,7 +19,7 @@ class ProductsTable
                 ImageColumn::make('image')
                     ->disk('public')
                     ->circular()
-                    ->size(40),
+                    ->imageSize(40),
                 TextColumn::make('name')
                     ->label('Produk')
                     ->searchable()

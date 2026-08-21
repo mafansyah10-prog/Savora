@@ -3,7 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Order;
-use Filament\Notifications\Actions\Action;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
 
@@ -25,12 +25,15 @@ class RealtimeOrderAlert extends Widget
 
     public function checkNewOrders()
     {
+        $hasNew = false;
+
         // 1. Cek Pesanan Baru Masuk
         $latestOrder = Order::latest('id')->first();
 
         if ($latestOrder && $this->lastKnownOrderId !== null && $latestOrder->id > $this->lastKnownOrderId) {
             $newOrdersCount = Order::where('id', '>', $this->lastKnownOrderId)->count();
             $this->lastKnownOrderId = $latestOrder->id;
+            $hasNew = true;
 
             $this->dispatch('play-order-sound', [
                 'id' => $latestOrder->id,
@@ -58,6 +61,7 @@ class RealtimeOrderAlert extends Widget
         if ($this->lastKnownPaidCount !== null && $currentPaidCount > $this->lastKnownPaidCount) {
             $latestPaidOrder = Order::where('status', 'paid')->latest('updated_at')->first();
             $this->lastKnownPaidCount = $currentPaidCount;
+            $hasNew = true;
 
             if ($latestPaidOrder) {
                 $this->dispatch('play-order-sound', [
@@ -78,6 +82,10 @@ class RealtimeOrderAlert extends Widget
                     ->persistent()
                     ->send();
             }
+        }
+
+        if ($hasNew) {
+            $this->dispatch('databaseNotificationsSent');
         }
     }
 }
