@@ -73,9 +73,9 @@ Route::get('/', function (Request $request) {
     }
 
     if ($sortFilter === 'new') {
-        $query->orderBy('is_new_manual', 'desc')->latest();
+        $query->where('is_new_manual', true)->latest();
     } elseif ($sortFilter === 'popular') {
-        $query->orderBy('is_popular_manual', 'desc')->orderBy('sales_count', 'desc');
+        $query->where('is_popular_manual', true)->orderBy('sales_count', 'desc');
     } else {
         $query->latest();
     }
