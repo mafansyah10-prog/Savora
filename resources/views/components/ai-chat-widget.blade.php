@@ -132,6 +132,7 @@ function aiChatbot() {
         expiresAt: null,
         secondsRemaining: 0,
         countdownIntervalId: null,
+        isLoggedIn: {{ auth()->check() ? 'true' : 'false' }},
         quickQuestions: [
             'Rekomendasi Menu Terpopuler',
             'Ada voucher diskon aktif?',
@@ -139,6 +140,11 @@ function aiChatbot() {
             'Apakah Savora buka sekarang?'
         ],
         init() {
+            // Filter out admin support option if guest
+            if (!this.isLoggedIn) {
+                this.quickQuestions = this.quickQuestions.filter(q => !q.includes('Hubungi Admin'));
+            }
+
             // Retrieve or generate session token
             let token = localStorage.getItem('savora_support_token');
             if (!token) {
@@ -155,7 +161,8 @@ function aiChatbot() {
                 this.messages = [
                     {
                         sender: 'bot',
-                        text: 'Halo! Selamat datang di Savora. 😊\n\nSaya Savvy, asisten virtual pintar Savora yang siap membantu menjawab pertanyaan Anda seputar menu lezat kami, harga, promo voucher, hingga cara pemesanan.\n\nJika ada kendala transaksi atau ingin langsung berbicara dengan admin, klik tombol **"📞 Hubungi Admin"** di bawah.'
+                        text: 'Halo! Selamat datang di Savora. 😊\n\nSaya Savvy, asisten virtual pintar Savora yang siap membantu menjawab pertanyaan Anda seputar menu lezat kami, harga, promo voucher, hingga cara pemesanan.' + 
+                              (this.isLoggedIn ? '\n\nJika ada kendala transaksi atau ingin langsung berbicara dengan admin, klik tombol **"📞 Hubungi Admin"** di bawah.' : '')
                     }
                 ];
             }

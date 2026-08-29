@@ -51,6 +51,13 @@ class AiAssistantController extends Controller
 
         // Trigger Live Chat manually (Customer sends "9" or "Hubungi Admin")
         if ($userMessage === '9' || strtolower($userMessage) === 'hubungi admin') {
+            if (!Auth::check()) {
+                return response()->json([
+                    'response' => "Mohon maaf, Anda harus [Masuk/Login](/login) ke akun Anda terlebih dahulu untuk dapat menghubungi Admin via Live Chat. Silakan [Masuk](/login) atau [Daftar](/register) terlebih dahulu. 😊",
+                    'live_chat' => false
+                ]);
+            }
+
             $session = SupportSession::updateOrCreate(
                 ['session_token' => $sessionToken],
                 [
