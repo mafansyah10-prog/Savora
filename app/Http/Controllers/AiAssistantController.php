@@ -135,8 +135,8 @@ PANDUAN PERILAKU & FORMAT JAWABAN:
             ]
         ];
 
-        // Call Gemini 2.5 Flash endpoint
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" . $apiKey;
+        // Call Gemini 1.5 Flash endpoint
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
 
         try {
             $response = Http::timeout(10)->post($url, [
