@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AiAssistantController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\MidtransWebhookController;
 use App\Http\Controllers\OrderController;
@@ -185,5 +186,7 @@ Route::get('/user/check-status', function (Request $request) {
     }
     return response()->json(['blocked' => false, 'authenticated' => true]);
 })->name('user.check-status');
+
+Route::post('/ai-chat', [AiAssistantController::class, 'chat'])->name('ai.chat');
 
 require __DIR__.'/auth.php';

@@ -1055,15 +1055,7 @@
         </div>
     </nav>
 
-    <!-- Floating WhatsApp Button -->
-    <a href="https://wa.me/{{ \App\Models\Setting::getGlobal()->whatsapp_number }}?text=Halo%20{{ urlencode(\App\Models\Setting::getGlobal()->store_name) }}%2C%20saya%20ingin%20bertanya%20mengenai%20pemesanan..." 
-       target="_blank" 
-       class="fixed bottom-[5.5rem] right-4 lg:bottom-6 lg:right-6 z-40 bg-emerald-500 hover:bg-emerald-600 text-white w-12 h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] group"
-       title="Hubungi Kami via WhatsApp">
-        <svg class="w-6 h-6 lg:w-7 lg:h-7 stroke-current fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12.004 2C6.51 2 2.014 6.5 2.014 12c0 2.13.67 4.11 1.81 5.73L2.03 22l4.43-1.76c1.55.93 3.37 1.47 5.3 1.47 5.49-.01 9.99-4.5 9.99-10S17.49 2 12.004 2zm5.72 13.91c-.24.67-1.18 1.25-1.92 1.41-.53.11-1.22.2-3.57-.77-3-1.24-4.94-4.28-5.09-4.48-.15-.2-1.21-1.61-1.21-3.07s.76-2.17 1.03-2.47c.27-.3.59-.38.79-.38.2 0 .4 0 .57.01.18.01.41-.01.63.5.24.57.81 1.97.88 2.12.07.15.12.32.02.52-.1.2-.15.32-.3.49-.15.17-.32.39-.46.52-.15.15-.31.32-.13.62.18.3.79 1.3 1.69 2.1 1.16 1.03 2.14 1.35 2.44 1.5.3.15.48.12.66-.08.18-.2.78-.9.99-1.21.2-.3.42-.25.7-.15.28.1 1.77.84 2.07.99.3.15.5.22.57.35.07.12.07.72-.17 1.39z"/>
-        </svg>
-    </a>
+
 
     <script>
         lucide.createIcons();
@@ -1352,5 +1344,7 @@
             }
         </style>
     @endauth
+
+    @include('components.ai-chat-widget')
 </body>
 </html>
