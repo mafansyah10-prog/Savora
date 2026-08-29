@@ -15,6 +15,14 @@ class PostResource extends Resource
 {
     protected static ?string $model = Post::class;
 
+    protected static ?string $navigationLabel = 'Jurnal';
+
+    protected static ?string $modelLabel = 'Jurnal';
+
+    protected static ?string $pluralModelLabel = 'Jurnal';
+
+    protected static ?string $slug = 'jurnal';
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-newspaper';
 
     protected static ?string $recordTitleAttribute = 'title';
