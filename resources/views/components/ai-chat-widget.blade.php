@@ -7,7 +7,13 @@
         
         <!-- Toggle Icons -->
         <span x-show="!isOpen" x-transition:enter="transition duration-200 transform" x-transition:enter-start="rotate-45 scale-0" x-transition:enter-end="rotate-0 scale-100">
-            <i data-lucide="message-square" class="w-6 h-6 stroke-[2.5]"></i>
+            <div class="relative flex items-center justify-center font-serif text-lg font-black text-black border-2 border-black rounded-full w-8 h-8 select-none">
+                S
+                <!-- Tiny AI Badge -->
+                <span class="absolute -top-1.5 -right-1.5 bg-black text-brand-cyan rounded-full p-0.5 border border-brand-cyan/30 shadow-md">
+                    <i data-lucide="bot" class="w-3 h-3"></i>
+                </span>
+            </div>
         </span>
         <span x-show="isOpen" x-transition:enter="transition duration-200 transform" x-transition:enter-start="-rotate-45 scale-0" x-transition:enter-end="rotate-0 scale-100" style="display: none;">
             <i data-lucide="x" class="w-6 h-6 stroke-[2.5]"></i>
