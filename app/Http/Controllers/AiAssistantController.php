@@ -323,4 +323,38 @@ PANDUAN PERILAKU & FORMAT JAWABAN:
             'success' => true
         ]);
     }
+
+    public function getMessages(Request $request)
+    {
+        $request->validate([
+            'session_id' => 'required|integer',
+        ]);
+
+        $sessionId = $request->input('session_id');
+        $session = SupportSession::find($sessionId);
+
+        if (!$session) {
+            return response()->json(['messages' => []]);
+        }
+
+        // Mark incoming user messages as read because the admin is currently viewing
+        SupportMessage::where('support_session_id', $session->id)
+            ->where('sender', 'user')
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        $messages = SupportMessage::where('support_session_id', $session->id)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return response()->json([
+            'messages' => $messages->map(function ($msg) {
+                return [
+                    'sender' => $msg->sender,
+                    'message' => $msg->message,
+                    'time' => $msg->created_at->setTimezone('Asia/Jakarta')->format('H:i')
+                ];
+            })
+        ]);
+    }
 }

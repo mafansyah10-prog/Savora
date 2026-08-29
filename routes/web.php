@@ -190,5 +190,6 @@ Route::get('/user/check-status', function (Request $request) {
 Route::post('/ai-chat', [AiAssistantController::class, 'chat'])->name('ai.chat');
 Route::get('/ai-chat/poll', [AiAssistantController::class, 'poll'])->name('ai.chat.poll');
 Route::post('/ai-chat/send', [AiAssistantController::class, 'sendLive'])->name('ai.chat.send');
+Route::get('/ai-chat/admin-messages', [AiAssistantController::class, 'getMessages'])->name('ai.chat.admin-messages');
 
 require __DIR__.'/auth.php';
