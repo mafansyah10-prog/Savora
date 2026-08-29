@@ -34,16 +34,17 @@
         <!-- Header -->
         <div class="px-5 py-4 bg-gradient-to-r from-[#1b3c37]/60 to-black/20 border-b border-white/5 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <!-- Avatar with pulsing green light -->
+                <!-- Avatar with pulsing green/orange light -->
                 <div class="relative w-10 h-10 rounded-full bg-[#1b3c37] border border-brand-cyan/20 flex items-center justify-center text-brand-cyan">
-                    <i data-lucide="bot" class="w-5 h-5"></i>
-                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border border-[#16181c] animate-pulse"></span>
+                    <i :data-lucide="liveChatMode ? 'user-cog' : 'bot'" class="w-5 h-5"></i>
+                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border border-[#16181c] animate-pulse"
+                          :class="liveChatMode ? 'bg-orange-500' : 'bg-emerald-500'"></span>
                 </div>
                 <div>
-                    <h4 class="text-xs font-black uppercase tracking-wider text-white">Savvy - AI Assistant</h4>
-                    <p class="text-[9px] text-emerald-400 font-bold uppercase tracking-widest flex items-center gap-1">
-                        Online
-                    </p>
+                    <h4 class="text-xs font-black uppercase tracking-wider text-white" x-text="liveChatMode ? 'Live Chat Admin' : 'Savvy - AI Assistant'"></h4>
+                    <p class="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1"
+                       :class="liveChatMode ? 'text-orange-400' : 'text-emerald-400'"
+                       x-text="liveChatMode ? 'Terhubung dengan Admin' : 'Online'"></p>
                 </div>
             </div>
             <button @click="isOpen = false" class="text-gray-400 hover:text-white transition p-1">
@@ -59,7 +60,9 @@
                     <div class="px-4 py-2.5 rounded-2xl text-xs leading-relaxed max-w-[85%] break-words shadow-md transition-all duration-300"
                          :class="msg.sender === 'user' 
                             ? 'bg-gradient-to-br from-brand-cyan/20 to-brand-teal/40 border border-brand-cyan/35 text-white rounded-tr-none' 
-                            : 'bg-white/5 border border-white/10 text-gray-200 rounded-tl-none'"
+                            : (msg.sender === 'system' 
+                                ? 'bg-orange-500/10 border border-orange-500/20 text-orange-400 rounded-2xl text-center self-center max-w-[95%]'
+                                : 'bg-white/5 border border-white/10 text-gray-200 rounded-tl-none')"
                          x-html="parseMessage(msg.text)">
                     </div>
                 </div>
@@ -73,8 +76,8 @@
             </div>
         </div>
 
-        <!-- Quick Replies -->
-        <div class="px-3 pb-2 pt-1.5 flex gap-2 overflow-x-auto scrollbar-hide flex-shrink-0 border-t border-white/5 bg-black/10">
+        <!-- Quick Replies (Hidden in Live Chat Mode) -->
+        <div x-show="!liveChatMode" class="px-3 pb-2 pt-1.5 flex gap-2 overflow-x-auto scrollbar-hide flex-shrink-0 border-t border-white/5 bg-black/10">
             <template x-for="q in quickQuestions" :key="q">
                 <button @click="askPreset(q)" 
                         class="flex-shrink-0 px-3 py-1.5 bg-white/5 hover:bg-brand-cyan/15 hover:border-brand-cyan/40 border border-white/10 text-[10px] text-gray-300 hover:text-white rounded-full transition-all duration-200 focus:outline-none">
@@ -88,7 +91,7 @@
             <input type="text" 
                    x-model="inputMsg" 
                    @keydown.enter="sendChat()" 
-                   placeholder="Tanyakan sesuatu..." 
+                   :placeholder="liveChatMode ? 'Ketik pesan untuk Admin...' : 'Tanyakan sesuatu...'" 
                    class="bg-black/40 border border-gray-800 focus:border-brand-cyan/80 focus:ring-1 focus:ring-brand-cyan/30 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none flex-1 placeholder-gray-600 transition-all">
             
             <button @click="sendChat()" 
@@ -107,14 +110,25 @@ function aiChatbot() {
         inputMsg: '',
         loading: false,
         messages: [],
+        liveChatMode: false,
+        sessionToken: '',
+        pollIntervalId: null,
         quickQuestions: [
             'Rekomendasi Menu Terpopuler',
             'Ada voucher diskon aktif?',
-            'Bagaimana cara memesan?',
+            '📞 Hubungi Admin',
             'Apakah Savora buka sekarang?'
         ],
         init() {
-            // Load messages from session storage to keep history across pages
+            // Retrieve or generate session token
+            let token = localStorage.getItem('savora_support_token');
+            if (!token) {
+                token = 'token_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                localStorage.setItem('savora_support_token', token);
+            }
+            this.sessionToken = token;
+
+            // Load saved messages
             const savedMessages = sessionStorage.getItem('savora_ai_chat');
             if (savedMessages) {
                 this.messages = JSON.parse(savedMessages);
@@ -122,21 +136,27 @@ function aiChatbot() {
                 this.messages = [
                     {
                         sender: 'bot',
-                        text: 'Halo! Selamat datang di Savora. 😊\n\nSaya Savvy, asisten virtual pintar Savora yang siap membantu menjawab pertanyaan Anda seputar menu lezat kami, harga, promo voucher, hingga cara pemesanan. Ada yang bisa saya bantu?'
+                        text: 'Halo! Selamat datang di Savora. 😊\n\nSaya Savvy, asisten virtual pintar Savora yang siap membantu menjawab pertanyaan Anda seputar menu lezat kami, harga, promo voucher, hingga cara pemesanan.\n\nJika ada kendala transaksi atau ingin langsung berbicara dengan admin, klik tombol **"📞 Hubungi Admin"** di bawah.'
                     }
                 ];
             }
+
+            // Check if there is an active support chat on backend
+            this.checkSupportStatus();
         },
         toggleChat() {
             this.isOpen = !this.isOpen;
             if (this.isOpen) {
                 this.scrollToBottom();
-                // Refresh Lucide icons in case new elements rendered
                 setTimeout(() => lucide.createIcons(), 50);
             }
         },
         askPreset(question) {
-            this.inputMsg = question;
+            if (question.includes('Hubungi Admin')) {
+                this.inputMsg = '9';
+            } else {
+                this.inputMsg = question;
+            }
             this.sendChat();
         },
         sendChat() {
@@ -152,43 +172,144 @@ function aiChatbot() {
             this.scrollToBottom();
             this.saveHistory();
 
-            // Extract last 10 messages for context history
-            const history = this.messages.slice(-10).map(m => ({
-                sender: m.sender,
-                text: m.text
-            }));
-
-            fetch('/ai-chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    message: textToSend,
-                    history: history.slice(0, -1) // Excluding the one we just added
+            if (this.liveChatMode) {
+                // Route message directly to Admin Support API
+                fetch('/ai-chat/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: textToSend,
+                        session_token: this.sessionToken
+                    })
                 })
-            })
-            .then(res => res.json())
-            .then(data => {
-                this.messages.push({
-                    sender: 'bot',
-                    text: data.response || 'Maaf, saya sedang mengalami kendala. Silakan coba kembali.'
+                .then(res => res.json())
+                .then(data => {
+                    this.loading = false;
+                    if (data.success === false) {
+                        this.messages.push({
+                            sender: 'system',
+                            text: 'Sesi chat telah selesai atau ditutup.'
+                        });
+                        this.liveChatMode = false;
+                        this.stopPolling();
+                        this.saveHistory();
+                    }
+                    this.scrollToBottom();
+                })
+                .catch(err => {
+                    console.error(err);
+                    this.messages.push({
+                        sender: 'system',
+                        text: 'Gagal mengirim pesan. Silakan periksa koneksi Anda.'
+                    });
+                    this.loading = false;
+                    this.scrollToBottom();
                 });
-                this.saveHistory();
-                this.loading = false;
-                this.scrollToBottom();
-            })
-            .catch(err => {
-                console.error(err);
-                this.messages.push({
-                    sender: 'bot',
-                    text: 'Aduh, sepertinya ada gangguan koneksi internet. Mohon pastikan koneksi Anda lancar dan coba lagi! 🙏'
+            } else {
+                // Route message to normal AI bot API
+                const history = this.messages.slice(-10).map(m => ({
+                    sender: m.sender,
+                    text: m.text
+                }));
+
+                fetch('/ai-chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: textToSend,
+                        history: history.slice(0, -1),
+                        session_token: this.sessionToken
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    this.loading = false;
+                    if (data.live_chat === true) {
+                        this.liveChatMode = true;
+                        this.messages.push({
+                            sender: 'bot',
+                            text: data.response
+                        });
+                        this.startPolling();
+                    } else {
+                        this.messages.push({
+                            sender: 'bot',
+                            text: data.response || 'Maaf, saya tidak dapat memahami respons tersebut. Ada hal lain yang bisa saya bantu?'
+                        });
+                    }
+                    this.saveHistory();
+                    this.scrollToBottom();
+                    setTimeout(() => lucide.createIcons(), 50);
+                })
+                .catch(err => {
+                    console.error(err);
+                    this.messages.push({
+                        sender: 'bot',
+                        text: 'Aduh, sepertinya ada gangguan koneksi internet. Mohon pastikan koneksi Anda lancar dan coba lagi! 🙏'
+                    });
+                    this.loading = false;
+                    this.scrollToBottom();
                 });
-                this.loading = false;
-                this.scrollToBottom();
-            });
+            }
+        },
+        checkSupportStatus() {
+            fetch(`/ai-chat/poll?session_token=${encodeURIComponent(this.sessionToken)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.live_chat === true) {
+                        this.liveChatMode = true;
+                        this.startPolling();
+                    }
+                })
+                .catch(err => console.error('Error checking chat status:', err));
+        },
+        startPolling() {
+            if (this.pollIntervalId) clearInterval(this.pollIntervalId);
+            
+            this.pollIntervalId = setInterval(() => {
+                fetch(`/ai-chat/poll?session_token=${encodeURIComponent(this.sessionToken)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.live_chat === false) {
+                            if (this.liveChatMode) {
+                                this.messages.push({
+                                    sender: 'system',
+                                    text: 'Hubungan Live Chat telah diselesaikan oleh Admin. Anda kembali berinteraksi dengan AI Assistant Savvy. 🤖'
+                                });
+                                this.liveChatMode = false;
+                                this.stopPolling();
+                                this.saveHistory();
+                                this.scrollToBottom();
+                            }
+                        } else {
+                            if (data.messages && data.messages.length > 0) {
+                                data.messages.forEach(msg => {
+                                    this.messages.push({
+                                        sender: 'bot',
+                                        text: msg.text
+                                    });
+                                });
+                                this.saveHistory();
+                                this.scrollToBottom();
+                            }
+                        }
+                    })
+                    .catch(err => console.error('Error polling support chat:', err));
+            }, 3000);
+        },
+        stopPolling() {
+            if (this.pollIntervalId) {
+                clearInterval(this.pollIntervalId);
+                this.pollIntervalId = null;
+            }
         },
         saveHistory() {
             sessionStorage.setItem('savora_ai_chat', JSON.stringify(this.messages));
@@ -204,7 +325,6 @@ function aiChatbot() {
         parseMessage(text) {
             if (!text) return '';
             
-            // Encode HTML special chars to prevent XSS
             let safeText = text
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
@@ -212,19 +332,10 @@ function aiChatbot() {
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
 
-            // Format double newlines to paragraphs
             safeText = safeText.replace(/\n\n/g, '<br><br>');
-            // Format single newlines to linebreaks
             safeText = safeText.replace(/\n/g, '<br>');
-
-            // Match markdown bold: **text**
             safeText = safeText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-            // Match inline code formatting: `code`
             safeText = safeText.replace(/`(.*?)`/g, '<code class="bg-white/10 px-1 py-0.5 rounded text-[11px] font-mono text-[#f7e1a0]">$1</code>');
-
-            // Match markdown links: [link text](url)
-            // Pattern handles standard links like [Sourdough](/produk/sourdough)
             safeText = safeText.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="text-brand-cyan hover:text-teal-300 font-bold underline transition-colors">$1</a>');
 
             return safeText;
@@ -234,7 +345,6 @@ function aiChatbot() {
 </script>
 
 <style>
-/* Custom thin scrollbar styling for Chat Box */
 .scrollbar-thin::-webkit-scrollbar {
     width: 4px;
 }

@@ -188,5 +188,7 @@ Route::get('/user/check-status', function (Request $request) {
 })->name('user.check-status');
 
 Route::post('/ai-chat', [AiAssistantController::class, 'chat'])->name('ai.chat');
+Route::get('/ai-chat/poll', [AiAssistantController::class, 'poll'])->name('ai.chat.poll');
+Route::post('/ai-chat/send', [AiAssistantController::class, 'sendLive'])->name('ai.chat.send');
 
 require __DIR__.'/auth.php';

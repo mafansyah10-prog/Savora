@@ -6,9 +6,12 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Setting;
 use App\Models\Voucher;
+use App\Models\SupportSession;
+use App\Models\SupportMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class AiAssistantController extends Controller
 {
@@ -17,10 +20,57 @@ class AiAssistantController extends Controller
         $request->validate([
             'message' => 'required|string|max:1000',
             'history' => 'nullable|array',
+            'session_token' => 'required|string|max:100',
         ]);
 
-        $userMessage = $request->input('message');
+        $userMessage = trim($request->input('message'));
         $chatHistory = $request->input('history', []);
+        $sessionToken = $request->input('session_token');
+
+        // Check if there is an active support session for this token
+        $activeSession = SupportSession::where('session_token', $sessionToken)
+            ->whereIn('status', ['pending', 'active'])
+            ->first();
+
+        if ($activeSession) {
+            // Already in live chat mode, save message directly
+            $msg = SupportMessage::create([
+                'support_session_id' => $activeSession->id,
+                'sender' => 'user',
+                'message' => $userMessage,
+            ]);
+
+            // Set status to pending to alert the admin
+            $activeSession->update(['status' => 'pending']);
+
+            return response()->json([
+                'response' => null, // Frontend will understand it's in live chat mode and just wait for poll
+                'live_chat' => true
+            ]);
+        }
+
+        // Trigger Live Chat manually (Customer sends "9" or "Hubungi Admin")
+        if ($userMessage === '9' || strtolower($userMessage) === 'hubungi admin') {
+            $session = SupportSession::updateOrCreate(
+                ['session_token' => $sessionToken],
+                [
+                    'user_id' => Auth::id(),
+                    'status' => 'pending'
+                ]
+            );
+
+            // Log the initial message
+            SupportMessage::create([
+                'support_session_id' => $session->id,
+                'sender' => 'user',
+                'message' => 'Pelanggan meminta bantuan Live Chat.',
+            ]);
+
+            return response()->json([
+                'response' => "Menghubungkan Anda ke Admin Savora... 📞\n\nSilakan sampaikan keluhan atau kendala pemesanan Anda di sini. Admin kami akan segera membalas pesan Anda sesegera mungkin di jendela chat ini.",
+                'live_chat' => true
+            ]);
+        }
 
         $apiKey = config('services.gemini.key');
 
@@ -109,11 +159,11 @@ PANDUAN PERILAKU & FORMAT JAWABAN:
    - Dashboard & Pangkat: [Dashboard Akun](/dashboard)
    - Jurnal & Tips Resep Savora: [Jurnal Savora](/jurnal)
 6. Jika pelanggan ingin membaca tips kuliner, info produk, atau resep buatan Savora, ajak mereka untuk membaca [Jurnal Savora](/jurnal).
-7. Jika ditanya mengenai cara pembayaran atau checkout, jelaskan bahwa setelah memasukkan menu ke [Keranjang Belanja](/keranjang), mereka dapat melakukan checkout dan melakukan pembayaran online secara otomatis menggunakan Midtrans (Mendukung e-wallet, transfer bank, dll.).
-8. Jangan membuat informasi fiktif tentang menu baru, harga baru, atau diskon yang tidak terdaftar di atas. Jika tidak tahu atau tidak tercantum, jawablah dengan jujur dan ramah.";
+7. Jika pelanggan mengalami kendala saat pemesanan atau pembayaran, atau secara eksplisit meminta berbicara dengan admin/manusia, beri tahu mereka untuk mengetik angka \"9\" atau mengetik \"Hubungi Admin\" untuk langsung terhubung dengan admin panel live chat kami.
+8. Jika ditanya mengenai cara pembayaran atau checkout, jelaskan bahwa setelah memasukkan menu ke [Keranjang Belanja](/keranjang), mereka dapat melakukan checkout dan melakukan pembayaran online secara otomatis menggunakan Midtrans (Mendukung e-wallet, transfer bank, dll.).
+9. Jangan membuat informasi fiktif tentang menu baru, harga baru, atau diskon yang tidak terdaftar di atas. Jika tidak tahu atau tidak tercantum, jawablah dengan jujur dan ramah.";
 
         // Format history for Gemini API
-        // Gemini API structure for contents: [{'role': 'user'|'model', 'parts': [{'text': '...'}]}]
         $contents = [];
 
         // Add history
@@ -168,5 +218,82 @@ PANDUAN PERILAKU & FORMAT JAWABAN:
                 'response' => "Aduh, maaf ya. Terjadi gangguan saat menghubungi asisten AI. Silakan coba lagi beberapa saat lagi! 🙏"
             ]);
         }
+    }
+
+    public function poll(Request $request)
+    {
+        $request->validate([
+            'session_token' => 'required|string|max:100',
+        ]);
+
+        $sessionToken = $request->input('session_token');
+
+        $session = SupportSession::where('session_token', $sessionToken)->first();
+
+        if (!$session) {
+            return response()->json([
+                'live_chat' => false,
+                'messages' => []
+            ]);
+        }
+
+        $isLive = in_array($session->status, ['pending', 'active']);
+
+        // Fetch all unread messages from admin
+        $unreadMessages = SupportMessage::where('support_session_id', $session->id)
+            ->where('sender', 'admin')
+            ->where('is_read', false)
+            ->get();
+
+        // Mark them as read
+        foreach ($unreadMessages as $msg) {
+            $msg->update(['is_read' => true]);
+        }
+
+        return response()->json([
+            'live_chat' => $isLive,
+            'status' => $session->status,
+            'messages' => $unreadMessages->map(function ($msg) {
+                return [
+                    'sender' => 'admin',
+                    'text' => $msg->message,
+                    'created_at' => $msg->created_at->toIso8601String()
+                ];
+            })
+        ]);
+    }
+
+    public function sendLive(Request $request)
+    {
+        $request->validate([
+            'message' => 'required|string|max:1000',
+            'session_token' => 'required|string|max:100',
+        ]);
+
+        $userMessage = trim($request->input('message'));
+        $sessionToken = $request->input('session_token');
+
+        $session = SupportSession::where('session_token', $sessionToken)->first();
+
+        if (!$session || $session->status === 'resolved') {
+            return response()->json([
+                'success' => false,
+                'response' => 'Sesi chat Anda dengan admin telah selesai.'
+            ]);
+        }
+
+        // Save message
+        SupportMessage::create([
+            'support_session_id' => $session->id,
+            'sender' => 'user',
+            'message' => $userMessage,
+        ]);
+
+        // Keep status pending (so admin sees it) or active
+        $session->update(['status' => 'pending']);
+
+        return response()->json([
+            'success' => true
+        ]);
     }
 }
