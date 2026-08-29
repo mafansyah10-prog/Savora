@@ -62,7 +62,8 @@ class AiAssistantController extends Controller
                 ['session_token' => $sessionToken],
                 [
                     'user_id' => Auth::id(),
-                    'status' => 'pending'
+                    'status' => 'pending',
+                    'expires_at' => now()->addMinutes(15)
                 ]
             );
 

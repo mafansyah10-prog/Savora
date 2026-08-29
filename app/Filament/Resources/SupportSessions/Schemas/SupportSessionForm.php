@@ -48,7 +48,7 @@ class SupportSessionForm
                 TextInput::make('duration_minutes')
                     ->label('Durasi Sesi Chat (Menit)')
                     ->numeric()
-                    ->default(10)
+                    ->default(15)
                     ->required()
                     ->dehydrated(false)
                     ->visible(fn ($record) => $record && $record->status !== 'resolved'),
