@@ -42,9 +42,14 @@
                 </div>
                 <div>
                     <h4 class="text-xs font-black uppercase tracking-wider text-white" x-text="liveChatMode ? 'Live Chat Admin' : 'Savvy - AI Assistant'"></h4>
-                    <p class="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1"
-                       :class="liveChatMode ? 'text-orange-400' : 'text-emerald-400'"
-                       x-text="liveChatMode ? 'Terhubung dengan Admin' : 'Online'"></p>
+                    <div class="flex items-center gap-2">
+                        <p class="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1"
+                           :class="liveChatMode ? 'text-orange-400' : 'text-emerald-400'"
+                           x-text="liveChatMode ? 'Terhubung dengan Admin' : 'Online'"></p>
+                        <span x-show="liveChatMode && secondsRemaining > 0" 
+                              class="text-[9px] text-orange-400 font-bold bg-orange-500/10 px-1.5 py-0.5 rounded border border-orange-500/20"
+                              x-text="Math.floor(secondsRemaining / 60) + 'm ' + (secondsRemaining % 60) + 's'"></span>
+                    </div>
                 </div>
             </div>
             <button @click="isOpen = false" class="text-gray-400 hover:text-white transition p-1">
@@ -74,6 +79,17 @@
                 <span class="w-1.5 h-1.5 bg-brand-cyan rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
                 <span class="w-1.5 h-1.5 bg-brand-cyan rounded-full animate-bounce" style="animation-delay: 0.3s"></span>
             </div>
+        </div>
+
+        <!-- Timeout Warning Banner -->
+        <div x-show="liveChatMode && secondsRemaining > 0 && secondsRemaining <= 60"
+             class="px-4 py-2 bg-amber-500/10 border-t border-b border-amber-500/30 text-[10px] text-amber-400 font-bold uppercase tracking-wider flex items-center justify-between flex-shrink-0"
+             style="display: none;">
+            <span class="flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                Batas Waktu Chat Hampir Habis!
+            </span>
+            <span x-text="secondsRemaining + 's'"></span>
         </div>
 
         <!-- Quick Replies (Hidden in Live Chat Mode) -->
@@ -113,6 +129,9 @@ function aiChatbot() {
         liveChatMode: false,
         sessionToken: '',
         pollIntervalId: null,
+        expiresAt: null,
+        secondsRemaining: 0,
+        countdownIntervalId: null,
         quickQuestions: [
             'Rekomendasi Menu Terpopuler',
             'Ada voucher diskon aktif?',
@@ -239,6 +258,7 @@ function aiChatbot() {
                             text: data.response
                         });
                         this.startPolling();
+                        this.startCountdown();
                     } else {
                         this.messages.push({
                             sender: 'bot',
@@ -266,7 +286,9 @@ function aiChatbot() {
                 .then(data => {
                     if (data.live_chat === true) {
                         this.liveChatMode = true;
+                        this.expiresAt = data.expires_at;
                         this.startPolling();
+                        this.startCountdown();
                     }
                 })
                 .catch(err => console.error('Error checking chat status:', err));
@@ -290,6 +312,11 @@ function aiChatbot() {
                                 this.scrollToBottom();
                             }
                         } else {
+                            if (data.expires_at) {
+                                this.expiresAt = data.expires_at;
+                                this.startCountdown();
+                            }
+
                             if (data.messages && data.messages.length > 0) {
                                 data.messages.forEach(msg => {
                                     this.messages.push({
@@ -310,6 +337,40 @@ function aiChatbot() {
                 clearInterval(this.pollIntervalId);
                 this.pollIntervalId = null;
             }
+            this.stopCountdown();
+        },
+        startCountdown() {
+            if (this.countdownIntervalId) clearInterval(this.countdownIntervalId);
+            
+            this.countdownIntervalId = setInterval(() => {
+                if (!this.expiresAt) {
+                    this.secondsRemaining = 0;
+                    return;
+                }
+                const diff = Math.floor((new Date(this.expiresAt) - new Date()) / 1000);
+                this.secondsRemaining = Math.max(0, diff);
+                
+                if (this.secondsRemaining <= 0) {
+                    if (this.liveChatMode) {
+                        this.messages.push({
+                            sender: 'system',
+                            text: 'Sesi obrolan telah berakhir secara otomatis karena batas waktu kedaluwarsa. Anda kembali berinteraksi dengan AI Assistant Savvy. 🤖'
+                        });
+                        this.liveChatMode = false;
+                        this.stopPolling();
+                        this.saveHistory();
+                        this.scrollToBottom();
+                    }
+                }
+            }, 1000);
+        },
+        stopCountdown() {
+            if (this.countdownIntervalId) {
+                clearInterval(this.countdownIntervalId);
+                this.countdownIntervalId = null;
+            }
+            this.secondsRemaining = 0;
+            this.expiresAt = null;
         },
         saveHistory() {
             sessionStorage.setItem('savora_ai_chat', JSON.stringify(this.messages));

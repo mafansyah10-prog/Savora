@@ -239,6 +239,20 @@ PANDUAN PERILAKU & FORMAT JAWABAN:
 
         $isLive = in_array($session->status, ['pending', 'active']);
 
+        // Check if session has expired
+        if ($isLive && $session->expires_at && now()->greaterThan($session->expires_at)) {
+            $session->update(['status' => 'resolved']);
+            $isLive = false;
+
+            // Log final auto-closure message
+            SupportMessage::create([
+                'support_session_id' => $session->id,
+                'sender' => 'admin',
+                'message' => 'Sesi obrolan telah berakhir secara otomatis karena batas waktu kedaluwarsa.',
+                'is_read' => true
+            ]);
+        }
+
         // Fetch all unread messages from admin
         $unreadMessages = SupportMessage::where('support_session_id', $session->id)
             ->where('sender', 'admin')
@@ -253,6 +267,7 @@ PANDUAN PERILAKU & FORMAT JAWABAN:
         return response()->json([
             'live_chat' => $isLive,
             'status' => $session->status,
+            'expires_at' => $session->expires_at ? $session->expires_at->toIso8601String() : null,
             'messages' => $unreadMessages->map(function ($msg) {
                 return [
                     'sender' => 'admin',
@@ -275,7 +290,11 @@ PANDUAN PERILAKU & FORMAT JAWABAN:
 
         $session = SupportSession::where('session_token', $sessionToken)->first();
 
-        if (!$session || $session->status === 'resolved') {
+        // Check if session is resolved or expired
+        if (!$session || $session->status === 'resolved' || ($session->expires_at && now()->greaterThan($session->expires_at))) {
+            if ($session && $session->status !== 'resolved') {
+                $session->update(['status' => 'resolved']);
+            }
             return response()->json([
                 'success' => false,
                 'response' => 'Sesi chat Anda dengan admin telah selesai.'

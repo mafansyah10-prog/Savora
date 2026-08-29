@@ -13,6 +13,11 @@ class SupportSession extends Model
         'session_token',
         'user_id',
         'status',
+        'expires_at',
+    ];
+
+    protected $casts = [
+        'expires_at' => 'datetime',
     ];
 
     public function user()

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\SupportSessions\Schemas;
 
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -43,6 +44,19 @@ class SupportSessionForm
                     ])
                     ->required()
                     ->native(false),
+
+                TextInput::make('duration_minutes')
+                    ->label('Durasi Sesi Chat (Menit)')
+                    ->numeric()
+                    ->default(10)
+                    ->required()
+                    ->dehydrated(false)
+                    ->visible(fn ($record) => $record && $record->status !== 'resolved'),
+
+                DateTimePicker::make('expires_at')
+                    ->label('Batas Waktu Sesi (Expires At)')
+                    ->disabled()
+                    ->timezone('Asia/Jakarta'),
 
                 Placeholder::make('chat_history')
                     ->label('Riwayat Percakapan')
