@@ -4,7 +4,7 @@ namespace App\Filament\Resources\SupportSessions\Pages;
 
 use App\Filament\Resources\SupportSessionResource;
 use Filament\Resources\Pages\ListRecords;
-use Filament\Resources\Components\Tab;
+use Filament\Resources\Pages\ListRecords\Tab;
 use Illuminate\Database\Eloquent\Builder;
 
 class ListSupportSessions extends ListRecords
