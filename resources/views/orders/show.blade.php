@@ -26,24 +26,25 @@
     @endif
 
     @php
+        $isPickup = ($order->shipping_method ?? 'delivery') === 'pickup';
         $statusLabels = [
             'pending'   => 'Menunggu Konfirmasi',
-            'paid'      => 'Lunas',
-            'shipped'   => 'Sedang Dikirim',
+            'paid'      => 'Lunas (Belum Ready)',
+            'shipped'   => $isPickup ? 'Sudah Ready (Siap Diambil)' : 'Sudah Ready (Sedang Dikirim)',
             'completed' => 'Selesai',
             'cancelled' => 'Dibatalkan',
         ];
         $statusBadgeClasses = [
             'pending'   => 'bg-amber-400/10 border-amber-400/30 text-amber-400',
             'paid'      => 'bg-emerald-400/10 border-emerald-400/30 text-emerald-400',
-            'shipped'   => 'bg-sky-400/10 border-sky-400/30 text-sky-400',
+            'shipped'   => $isPickup ? 'bg-amber-400/10 border border-amber-400/30 text-amber-400' : 'bg-sky-400/10 border-sky-400/30 text-sky-400',
             'completed' => 'bg-violet-400/10 border-violet-400/30 text-violet-400',
             'cancelled' => 'bg-red-400/10 border-red-400/30 text-red-400',
         ];
         $statusIcons = [
             'pending'   => 'clock',
             'paid'      => 'check-circle',
-            'shipped'   => 'truck',
+            'shipped'   => $isPickup ? 'shopping-bag' : 'truck',
             'completed' => 'badge-check',
             'cancelled' => 'x-circle',
         ];
@@ -192,8 +193,8 @@
 
                 @foreach([
                     ['pending',   'Dipesan',  'clock'],
-                    ['paid',      'Lunas',    'check-circle'],
-                    ['shipped',   'Dikirim',  'truck'],
+                    ['paid',      'Lunas (Belum Ready)',    'check-circle'],
+                    ['shipped',   $isPickup ? 'Sudah Ready (Siap Diambil)' : 'Sudah Ready (Sedang Dikirim)',  $isPickup ? 'shopping-bag' : 'truck'],
                     ['completed', 'Selesai',  'badge-check'],
                 ] as $i => [$step, $label, $icon])
                     @php
@@ -377,14 +378,20 @@
                     </div>
                 </div>
                 @elseif($order->status === 'shipped')
-                {{-- Delivery Proof Upload Form --}}
+                {{-- Delivery / Pickup Proof Upload Form --}}
                 <div id="delivery-proof-container" class="bg-[#16181d] border border-gray-800 rounded-xl md:rounded-2xl p-4 md:p-5 space-y-4">
                     <div class="flex items-center gap-2 text-brand-cyan">
-                        <i data-lucide="package-check" class="w-4 h-4 text-brand-cyan"></i>
-                        <p class="text-xs font-black uppercase tracking-wider">Konfirmasi Produk Sampai</p>
+                        <i data-lucide="{{ $isPickup ? 'shopping-bag' : 'package-check' }}" class="w-4 h-4 text-brand-cyan"></i>
+                        <p class="text-xs font-black uppercase tracking-wider">
+                            {{ $isPickup ? 'Konfirmasi Pengambilan Pesanan' : 'Konfirmasi Produk Sampai' }}
+                        </p>
                     </div>
                     <p class="text-xs text-gray-400 leading-relaxed">
-                        Pesanan Anda sedang dikirim oleh kurir. Silakan unggah foto bukti bahwa produk telah sampai ke lokasi tujuan Anda untuk menyelesaikan transaksi ini.
+                        @if($isPickup)
+                            Pesanan Anda sudah siap diambil di toko. Silakan unggah foto bukti serah terima produk saat mengambil pesanan di toko untuk menyelesaikan transaksi ini.
+                        @else
+                            Pesanan Anda sedang dikirim oleh kurir. Silakan unggah foto bukti bahwa produk telah sampai ke lokasi tujuan Anda untuk menyelesaikan transaksi ini.
+                        @endif
                     </p>
 
                     <form action="{{ route('orders.upload_delivery_proof', $order) }}" method="POST" enctype="multipart/form-data" class="space-y-3">
@@ -392,7 +399,7 @@
                         <input type="file" name="delivery_proof" required accept="image/*"
                                class="block w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-black file:uppercase file:bg-gray-800 file:text-brand-cyan hover:file:bg-gray-700 file:cursor-pointer bg-black/25 border border-gray-850 rounded-lg p-2">
                         <button type="submit" class="w-full bg-brand-cyan hover:bg-teal-400 text-black font-black text-xs py-3 rounded-lg transition active:scale-95 uppercase tracking-widest text-center cursor-pointer">
-                            Unggah Bukti & Selesaikan Pesanan
+                            {{ $isPickup ? 'Unggah Bukti Ambil & Selesaikan Pesanan' : 'Unggah Bukti Terima & Selesaikan Pesanan' }}
                         </button>
                     </form>
                 </div>
@@ -770,10 +777,11 @@
         const fetchUrl = "{{ route('orders.show', $order->id) }}";
         let currentStatus = "{{ $order->status }}";
 
+        const isPickup = {{ $isPickup ? 'true' : 'false' }};
         const statusBadgeClasses = {
             pending:   'bg-amber-400/10 border border-amber-400/30 text-amber-400',
             paid:      'bg-emerald-400/10 border border-emerald-400/30 text-emerald-400',
-            shipped:   'bg-sky-400/10 border border-sky-400/30 text-sky-400',
+            shipped:   isPickup ? 'bg-amber-400/10 border border-amber-400/30 text-amber-400' : 'bg-sky-400/10 border border-sky-400/30 text-sky-400',
             completed: 'bg-violet-400/10 border border-violet-400/30 text-violet-400',
             cancelled: 'bg-red-400/10 border border-red-400/30 text-red-400',
         };

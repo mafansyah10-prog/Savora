@@ -71,6 +71,37 @@ class Setting extends Model
         return true;
     }
 
+    public function getTodayHours(): array
+    {
+        $todayDate = now()->format('Y-m-d');
+        $specialSchedules = $this->special_schedules ?? [];
+        $todaySpecial = collect($specialSchedules)->firstWhere('date', $todayDate);
+        if ($todaySpecial) {
+            return [
+                'open_time' => !empty($todaySpecial['open_time']) ? $todaySpecial['open_time'] : '00:00:00',
+                'close_time' => !empty($todaySpecial['close_time']) ? $todaySpecial['close_time'] : '23:59:59',
+            ];
+        }
+
+        $mode = $this->store_hours_mode ?? 'global';
+        if ($mode === 'weekly') {
+            $dayOfWeek = strtolower(now()->format('l'));
+            $weeklySchedule = $this->weekly_schedule ?? [];
+            if (isset($weeklySchedule[$dayOfWeek])) {
+                $daySchedule = $weeklySchedule[$dayOfWeek];
+                return [
+                    'open_time' => !empty($daySchedule['open_time']) ? $daySchedule['open_time'] : '00:00:00',
+                    'close_time' => !empty($daySchedule['close_time']) ? $daySchedule['close_time'] : '23:59:59',
+                ];
+            }
+        }
+
+        return [
+            'open_time' => !empty($this->store_open_time) ? $this->store_open_time : '00:00:00',
+            'close_time' => !empty($this->store_close_time) ? $this->store_close_time : '23:59:59',
+        ];
+    }
+
     private function isTimeWithinRange(string $now, string $open, string $close): bool
     {
         if ($open <= $close) {

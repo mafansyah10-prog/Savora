@@ -30,6 +30,22 @@ class OrdersTable
                     ->searchable(),
                 TextColumn::make('customer_phone')
                     ->label('WhatsApp'),
+                TextColumn::make('shipping_method')
+                    ->label('Layanan')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'pickup' => 'Pickup di Outlet',
+                        'delivery' => 'Delivery',
+                        default => 'Delivery',
+                    })
+                    ->color(fn (?string $state): string => match ($state) {
+                        'pickup' => 'warning',
+                        'delivery' => 'success',
+                        default => 'success',
+                    }),
+                TextColumn::make('pickup_time')
+                    ->label('Jam Ambil')
+                    ->placeholder('—'),
                 TextColumn::make('total_amount')
                     ->label('Total')
                     ->money('IDR')
@@ -50,10 +66,10 @@ class OrdersTable
                 TextColumn::make('status')
                     ->badge()
                     ->label('Status')
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(fn (string $state, Order $record): string => match ($state) {
                         'pending' => 'Pending',
-                        'paid' => 'Lunas',
-                        'shipped' => 'Dikirim',
+                        'paid' => 'Lunas (Belum Ready)',
+                        'shipped' => $record->shipping_method === 'pickup' ? 'Sudah Ready (Siap Diambil)' : 'Sudah Ready (Dikirim)',
                         'completed' => 'Selesai',
                         'cancelled' => 'Dibatalkan',
                         default => ucfirst($state),
@@ -105,6 +121,15 @@ class OrdersTable
                     ->color('success')
                     ->url(fn (Order $record): string => route('orders.print', $record))
                     ->openUrlInNewTab(),
+                Action::make('mark_ready')
+                    ->label(fn (Order $record): string => $record->shipping_method === 'pickup' ? 'Siap Diambil' : 'Kirim Pesanan')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('info')
+                    ->requiresConfirmation()
+                    ->visible(fn (Order $record): bool => $record->status === 'paid')
+                    ->action(function (Order $record) {
+                        $record->update(['status' => 'shipped']);
+                    }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

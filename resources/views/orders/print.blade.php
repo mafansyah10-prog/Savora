@@ -45,12 +45,36 @@
         </button>
     </div>
 
-    <div class="receipt-container bg-white text-black p-6 rounded-2xl shadow-2xl border border-gray-200 w-full max-w-[80mm] overflow-hidden">
+    @php
+        $isPickup = ($order->shipping_method ?? 'delivery') === 'pickup';
+        $themeColor = $isPickup ? '#d97706' : '#0891b2';
+        $themeBg = $isPickup ? '#fef3c7' : '#ecfeff';
+        $themeText = $isPickup ? '#92400e' : '#155e75';
+    @endphp
+
+    <div class="receipt-container bg-white text-black p-6 rounded-2xl shadow-2xl w-full max-w-[80mm] overflow-hidden border"
+         style="border-top: 8px solid {{ $themeColor }};">
+         
+        {{-- Service Type Badge --}}
         <div class="text-center mb-4">
+            <span class="inline-block px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest"
+                  style="background-color: {{ $themeBg }}; color: {{ $themeText }}; border: 1px solid {{ $themeColor }}30;">
+                @if($isPickup)
+                    🛍️ PICKUP DI OUTLET
+                @else
+                    🚚 DIKIRIM (DELIVERY)
+                @endif
+            </span>
+        </div>
+
+        <div class="text-center mb-4 flex flex-col items-center">
+            @if(\App\Models\Setting::getGlobal()->store_logo)
+                <img src="{{ asset('storage/' . \App\Models\Setting::getGlobal()->store_logo) }}" alt="Logo" class="h-12 w-auto object-contain mb-2">
+            @endif
             <h2 class="font-bold text-lg uppercase tracking-wider">{{ \App\Models\Setting::getGlobal()->store_name }}</h2>
             <p class="text-[9px] text-gray-500 mt-0.5">{{ \App\Models\Setting::getGlobal()->store_address }}</p>
             <p class="text-[9px] text-gray-500">WhatsApp: +{{ \App\Models\Setting::getGlobal()->whatsapp_number }}</p>
-            <div class="border-b border-dashed border-gray-300 my-3"></div>
+            <div class="w-full border-b border-dashed border-gray-300 my-3"></div>
         </div>
         
         <div class="text-[11px] space-y-1 mb-4">
@@ -70,6 +94,25 @@
                 <span>Telepon:</span>
                 <span>{{ $order->customer_phone }}</span>
             </div>
+            <div class="flex justify-between">
+                <span>Layanan:</span>
+                <span class="font-bold uppercase tracking-wider" style="color: {{ $themeColor }};">
+                    {{ $isPickup ? 'Pickup di Outlet' : 'Kirim / Delivery' }}
+                </span>
+            </div>
+            @if(!$isPickup)
+                <div class="flex justify-between">
+                    <span>Alamat Kirim:</span>
+                    <span class="text-right truncate max-w-[150px]" title="{{ $order->shipping_address }}">{{ $order->shipping_address }}</span>
+                </div>
+            @else
+                @if($order->pickup_time)
+                <div class="flex justify-between font-bold" style="color: {{ $themeColor }};">
+                    <span>Jam Ambil:</span>
+                    <span>{{ $order->pickup_time }} WIB</span>
+                </div>
+                @endif
+            @endif
             <div class="flex justify-between">
                 <span>Metode Bayar:</span>
                 <span class="uppercase font-semibold">{{ str_replace('_', ' ', $order->payment_method ?? 'transfer_bank') }}</span>
@@ -238,8 +281,14 @@
         <div class="border-b border-dashed border-gray-300 my-3"></div>
         
         <div class="text-center text-[9px] text-gray-500 space-y-1 mt-4">
+            @if($isPickup)
+                <p class="font-bold text-amber-600">Silakan ambil pesanan Anda sesuai waktu pengambilan</p>
+            @else
+                <p class="font-bold text-cyan-600">Kurir kami akan segera mengirimkan pesanan Anda</p>
+            @endif
+            <div class="w-full border-b border-dashed border-gray-200 my-2.5"></div>
             <p class="font-semibold text-black">TERIMA KASIH ATAS KUNJUNGAN ANDA</p>
-            <p>Savora - Artisan Bakery & Food</p>
+            <p>{{ \App\Models\Setting::getGlobal()->store_name }}</p>
         </div>
     </div>
 

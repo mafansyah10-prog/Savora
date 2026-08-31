@@ -103,17 +103,75 @@ class AiAssistantController extends Controller
                     return "- {$product->name} (Kategori: {$product->category->name}) - Harga: {$price}{$discountStr}. Stok: " . ($product->stock ?? 'Tersedia') . ". Tautan detail menu: [Lihat Menu](/produk/{$product->slug})";
                 })->toArray();
 
-            $vouchers = Voucher::where('is_active', true)
-                ->where(function ($q) {
-                    $q->whereNull('expires_at')
-                        ->orWhere('expires_at', '>', now());
-                })
-                ->get()
-                ->map(function ($voucher) {
-                    $minSpend = 'Rp ' . number_format($voucher->min_spend, 0, ',', '.');
-                    $discountStr = $voucher->type === 'percent' ? "{$voucher->discount}%" : 'Rp ' . number_format($voucher->discount, 0, ',', '.');
-                    return "- Kode: `{$voucher->code}` - Diskon {$discountStr} (Minimal belanja {$minSpend}) - {$voucher->description}";
+            // Fetch vouchers based on user login status
+            if (Auth::check()) {
+                $user = Auth::user();
+                $rankKeys = array_keys(\App\Models\User::$ranks);
+                $userRankIndex = array_search(strtolower($user->rank ?? 'reguler'), $rankKeys);
+                $eligibleRanks = array_slice($rankKeys, 0, $userRankIndex !== false ? $userRankIndex + 1 : 1);
+
+                $vouchersQuery = Voucher::where('is_active', true)
+                    ->where('is_hidden', false)
+                    ->where(function ($q) {
+                        $q->whereNull('expires_at')
+                            ->orWhere('expires_at', '>', now());
+                    })
+                    ->where(function ($q) use ($eligibleRanks) {
+                        $q->whereNull('rank')
+                            ->orWhereIn('rank', $eligibleRanks);
+                    })
+                    ->where(function ($q) use ($user) {
+                        $q->whereNull('user_id')
+                            ->orWhere('user_id', $user->id);
+                    })
+                    ->latest()
+                    ->get();
+
+                // Filter out vouchers that have exceeded usage limits
+                $vouchersQuery = $vouchersQuery->filter(function (Voucher $v) use ($user) {
+                    if ($v->usage_limit !== null && $v->orders()->count() >= $v->usage_limit) {
+                        return false;
+                    }
+                    $limitPerUser = $v->limit_per_user;
+                    if ($limitPerUser === null && (str_starts_with($v->code, 'BARU-') || $v->user_id !== null)) {
+                        $limitPerUser = 1;
+                    }
+                    if ($limitPerUser !== null) {
+                        $userUsageCount = $user->orders()
+                            ->where('voucher_code', $v->code)
+                            ->where('status', '!=', 'cancelled')
+                            ->count();
+                        if ($userUsageCount >= $limitPerUser) {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+
+                $vouchers = $vouchersQuery->map(function ($voucher) {
+                    $minSpend = 'Rp ' . number_format($voucher->min_order_amount, 0, ',', '.');
+                    $discountStr = $voucher->type === 'percent' ? "{$voucher->value}%" : 'Rp ' . number_format($voucher->value, 0, ',', '.');
+                    $isSpecial = $voucher->user_id !== null ? " (Khusus untuk Anda)" : "";
+                    $rankLabel = $voucher->rank ? " (Syarat pangkat: " . ucfirst($voucher->rank) . ")" : "";
+                    return "- Kode: `{$voucher->code}`{$isSpecial}{$rankLabel} - Diskon {$discountStr} (Minimal belanja {$minSpend}) - {$voucher->description}";
                 })->toArray();
+            } else {
+                $vouchers = Voucher::where('is_active', true)
+                    ->where('is_hidden', false)
+                    ->where(function ($q) {
+                        $q->whereNull('expires_at')
+                            ->orWhere('expires_at', '>', now());
+                    })
+                    ->whereNull('rank')
+                    ->whereNull('user_id')
+                    ->latest()
+                    ->get()
+                    ->map(function ($voucher) {
+                        $minSpend = 'Rp ' . number_format($voucher->min_order_amount, 0, ',', '.');
+                        $discountStr = $voucher->type === 'percent' ? "{$voucher->value}%" : 'Rp ' . number_format($voucher->value, 0, ',', '.');
+                        return "- Kode: `{$voucher->code}` - Diskon {$discountStr} (Minimal belanja {$minSpend}) - {$voucher->description}";
+                    })->toArray();
+            }
 
             $globalSetting = Setting::getGlobal();
             $storeName = $globalSetting->store_name ?? 'Savora';
@@ -140,21 +198,37 @@ INFORMASI TOKO SAVORA:
 SISTEM LOYALITAS & PANGKAT PELANGGAN (RANK):
 Savora memiliki sistem pangkat pelanggan setia. Semakin sering pelanggan melakukan pemesanan, pangkat mereka akan naik dan mendapatkan keuntungan voucher khusus:
 1. Reguler: Pangkat awal untuk semua pelanggan.
-2. Emas (Gold): Mendapatkan akses voucher khusus pangkat emas.
-3. Platinum: Mendapatkan akses voucher pangkat platinum dengan keuntungan lebih besar.
-4. Diamond: Pangkat tertinggi dengan diskon voucher paling besar khusus pangkat diamond.
+2. Perunggu (Bronze)
+3. Perak (Silver)
+4. Emas (Gold): Mendapatkan akses voucher khusus pangkat emas.
+5. Platinum: Mendapatkan akses voucher pangkat platinum dengan keuntungan lebih besar.
+6. Diamond: Pangkat tertinggi dengan diskon voucher paling besar khusus pangkat diamond.
 Pelanggan dapat memantau status pangkat mereka di [Dashboard Akun](/dashboard).
 
 KATEGORI KULINER YANG TERSEDIA:
 " . implode("\n", array_map(fn($c) => "- " . $c, $categories)) . "
 
 DAFTAR MENU AKTIF & HARGA SAAT INI:
-" . implode("\n", $products) . "
+" . implode("\n", $products) . "\n\n";
 
-PROMO & VOUCHER DISKON AKTIF:
-" . implode("\n", $vouchers) . "
+        // Append authenticated user details to system instruction
+        if (Auth::check()) {
+            $user = Auth::user();
+            $systemInstruction .= "INFORMASI CUSTOMER SAAT INI (SUDAH LOGIN):
+- Nama Customer: {$user->name}
+- Pangkat Customer saat ini: " . ucfirst($user->rank ?? 'reguler') . "
+- Voucher Aktif yang dimiliki oleh customer ini (khusus untuk customer ini dan pangkatnya):
+" . (empty($vouchers) ? "(Customer ini tidak memiliki voucher pribadi/khusus pangkat yang aktif saat ini)" : implode("\n", $vouchers)) . "
+- PANDUAN: Jika customer bertanya tentang voucher yang mereka miliki/aktif, informasikan kode voucher di atas secara ramah. Beri tahu pula pangkat mereka.\n\n";
+        } else {
+            $systemInstruction .= "INFORMASI CUSTOMER SAAT INI:
+- Customer BELUM LOGIN (Guest).
+- Voucher yang tersedia untuk umum:
+" . (empty($vouchers) ? "(Tidak ada voucher umum aktif saat ini)" : implode("\n", $vouchers)) . "
+- PANDUAN: Beritahu customer voucher umum di atas. Ajak customer secara ramah untuk [Masuk/Login](/login) agar Savvy dapat memeriksa voucher khusus/pribadi milik mereka dan pangkat loyalitas mereka.\n\n";
+        }
 
-PANDUAN PERILAKU & FORMAT JAWABAN:
+        $systemInstruction .= "PANDUAN PERILAKU & FORMAT JAWABAN:
 1. Jawablah dengan singkat, padat, dan langsung pada inti jawaban agar mudah dibaca di layar chat kecil (widget). Hindari penjelasan bertele-tele.
 2. Gunakan emoji secara ramah (misalnya 😊, 🍰, 🥤, 📦) untuk membuat suasana santai dan bersahabat.
 3. Selalu rekomendasikan menu spesifik yang relevan dengan pertanyaan user beserta harganya.
@@ -193,11 +267,11 @@ PANDUAN PERILAKU & FORMAT JAWABAN:
             ]
         ];
 
-        // Call Gemini 3.6 Flash endpoint
-        $url = "https://generativelanguage.googleapis.com/v1/models/gemini-3.6-flash:generateContent?key=" . $apiKey;
+        // Call Gemini 3.5 Flash endpoint
+        $url = "https://generativelanguage.googleapis.com/v1/models/gemini-3.5-flash:generateContent?key=" . $apiKey;
 
         try {
-            $response = Http::timeout(10)->post($url, [
+            $response = Http::timeout(30)->post($url, [
                 'contents' => $contents,
                 'systemInstruction' => [
                     'parts' => [

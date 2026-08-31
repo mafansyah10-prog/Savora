@@ -212,7 +212,7 @@
         </div>
 
         {{-- ─── Order Summary (Right) ─────────────────────────────────── --}}
-        <div class="w-full lg:w-[40%] order-2 lg:order-2">
+        <div class="w-full lg:w-[40%] order-2 lg:order-2" x-data="{ shippingMethod: 'delivery' }">
             <div class="bg-[#16181d] border border-gray-800 rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden lg:sticky lg:top-24">
 
                 {{-- Summary totals --}}
@@ -232,7 +232,7 @@
                             <span class="text-emerald-400 font-semibold" id="summary-product-discount">-Rp {{ number_format($productDiscount, 0, ',', '.') }}</span>
                         </div>
                         {{-- Dropdown Pilih Wilayah --}}
-                        <div class="space-y-1.5 pt-1">
+                        <div class="space-y-1.5 pt-1" x-show="shippingMethod === 'delivery'" id="shipping-zone-wrapper">
                             <label class="block text-[10px] text-gray-500 uppercase tracking-widest">Wilayah Pengiriman</label>
                             <select id="shipping-zone-select" class="w-full bg-black/30 border border-gray-800 hover:border-gray-700 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/20 rounded-xl py-2 px-3 text-xs text-white outline-none transition">
                                 <option value="" class="bg-[#16181d] text-gray-500">Pilih Wilayah...</option>
@@ -243,7 +243,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="flex justify-between text-gray-400">
+                        <div class="flex justify-between text-gray-400" x-show="shippingMethod === 'delivery'" id="shipping-cost-wrapper">
                             <span>Ongkos Kirim</span>
                             <span class="{{ $shippingCost > 0 ? 'text-white font-semibold' : 'text-emerald-400 font-bold text-xs uppercase tracking-wider' }}" id="summary-shipping">
                                 {{ $shippingCost > 0 ? 'Rp ' . number_format($shippingCost, 0, ',', '.') : 'Pilih Wilayah' }}
@@ -345,6 +345,26 @@
 
                     {{-- Delivery & Payment info --}}
                     <div class="p-4 md:p-6 space-y-5">
+                        <!-- Shipping Method Selector -->
+                        <div>
+                            <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-[0.25em] mb-3">Metode Layanan</h3>
+                            <input type="hidden" name="shipping_method" :value="shippingMethod">
+                            <div class="grid grid-cols-2 gap-3 bg-black/40 p-1 border border-gray-800/80 rounded-2xl">
+                                <button type="button" @click="shippingMethod = 'delivery'; updateShippingLayout()"
+                                    class="py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 border border-transparent text-xs font-black uppercase tracking-wider"
+                                    :class="shippingMethod === 'delivery' ? 'bg-gradient-to-r from-brand-cyan to-teal-500 text-[#0f1115] shadow-lg font-black' : 'text-gray-400 hover:text-white'">
+                                    <i data-lucide="truck" class="w-4 h-4 pointer-events-none"></i>
+                                    <span>Kirim (Delivery)</span>
+                                </button>
+                                <button type="button" @click="shippingMethod = 'pickup'; updateShippingLayout()"
+                                    class="py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 border border-transparent text-xs font-black uppercase tracking-wider"
+                                    :class="shippingMethod === 'pickup' ? 'bg-gradient-to-r from-brand-cyan to-teal-500 text-[#0f1115] shadow-lg font-black' : 'text-gray-400 hover:text-white'">
+                                    <i data-lucide="store" class="w-4 h-4 pointer-events-none"></i>
+                                    <span>Pickup di Outlet</span>
+                                </button>
+                            </div>
+                        </div>
+
                         {{-- Delivery info --}}
                         <div>
                             <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-[0.25em] mb-3.5">Informasi Pengiriman</h3>
@@ -363,11 +383,35 @@
                                         class="w-full bg-black/30 border border-gray-800 hover:border-gray-700 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/20 rounded-xl py-2.5 px-3.5 text-sm text-white transition placeholder-gray-600 outline-none"
                                         placeholder="08xxxxxxxxxx">
                                 </div>
-                                <div>
+                                <div x-show="shippingMethod === 'delivery'">
                                     <label class="block text-[10px] text-gray-500 uppercase tracking-widest mb-1.5">Alamat Lengkap</label>
-                                    <textarea name="shipping_address" required rows="3"
+                                    <textarea name="shipping_address" :required="shippingMethod === 'delivery'" rows="3"
                                         class="w-full bg-black/30 border border-gray-800 hover:border-gray-700 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/20 rounded-xl py-2.5 px-3.5 text-sm text-white transition placeholder-gray-600 outline-none resize-none"
                                         placeholder="Jl. ..."></textarea>
+                                </div>
+                                <div x-show="shippingMethod === 'pickup'" class="space-y-2">
+                                    <label class="block text-[10px] text-gray-500 uppercase tracking-widest mb-1.5 font-bold">Jam Pengambilan (Pickup Time)</label>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <div>
+                                            <select id="pickup-hour" onchange="updatePickupTimeOptions()"
+                                                class="w-full bg-black/30 border border-gray-800 hover:border-gray-700 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/20 rounded-xl py-2.5 px-3 text-xs text-white outline-none transition">
+                                                <option value="" class="bg-[#16181d] text-gray-500">Jam...</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <select id="pickup-minute" onchange="updatePickupTimeOptions()"
+                                                class="w-full bg-black/30 border border-gray-800 hover:border-gray-700 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/20 rounded-xl py-2.5 px-3 text-xs text-white outline-none transition">
+                                                <option value="" class="bg-[#16181d] text-gray-500">Menit...</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <select id="pickup-second" onchange="updatePickupTimeOptions()"
+                                                class="w-full bg-black/30 border border-gray-800 hover:border-gray-700 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/20 rounded-xl py-2.5 px-3 text-xs text-white outline-none transition">
+                                                <option value="" class="bg-[#16181d] text-gray-500">Detik...</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" name="pickup_time" id="pickup-time-combined">
                                 </div>
                                 <div>
                                     <label class="block text-[10px] text-gray-500 uppercase tracking-widest mb-1.5">Catatan <span class="text-gray-700 normal-case">(opsional)</span></label>
@@ -913,12 +957,166 @@
             });
         }
 
+        // Update Shipping Layout dynamically
+        window.updateShippingLayout = function() {
+            // Get method from input
+            const methodInput = document.querySelector('input[name="shipping_method"]');
+            const method = methodInput ? methodInput.value : 'delivery';
+            const zoneSelect = document.getElementById('shipping-zone-select');
+
+            if (method === 'pickup') {
+                if (zoneSelect && zoneSelect.value) {
+                    zoneSelect.value = '';
+                    const event = new Event('change');
+                    zoneSelect.dispatchEvent(event);
+                }
+            }
+        };
+
+        @php
+            $todayHours = \App\Models\Setting::getGlobal()->getTodayHours();
+            $openTime = $todayHours['open_time'] ?? '00:00:00';
+            $closeTime = $todayHours['close_time'] ?? '23:59:59';
+        @endphp
+
+        const openTimeStr = "{{ $openTime }}";
+        const closeTimeStr = "{{ $closeTime }}";
+
+        window.updatePickupTimeOptions = function() {
+            const hourSelect = document.getElementById('pickup-hour');
+            const minuteSelect = document.getElementById('pickup-minute');
+            const secondSelect = document.getElementById('pickup-second');
+
+            if (!hourSelect || !minuteSelect || !secondSelect) return;
+
+            const selectedHour = hourSelect.value;
+            const selectedMinute = minuteSelect.value;
+            const selectedSecond = secondSelect.value;
+
+            const now = new Date();
+            const currHr = now.getHours();
+            const currMin = now.getMinutes();
+            const currSec = now.getSeconds();
+
+            const openParts = openTimeStr.split(':');
+            const closeParts = closeTimeStr.split(':');
+
+            const openHr = Number(openParts[0]) || 0;
+            const openMin = Number(openParts[1]) || 0;
+            const openSec = Number(openParts[2]) || 0;
+
+            const closeHr = Number(closeParts[0]) || 0;
+            const closeMin = Number(closeParts[1]) || 0;
+            const closeSec = Number(closeParts[2]) || 0;
+
+            const startHr = Math.max(openHr, currHr);
+
+            // 1. Populate Hours
+            const currentHourOptions = Array.from(hourSelect.options);
+            hourSelect.innerHTML = '';
+            hourSelect.appendChild(currentHourOptions[0]); // placeholder
+
+            for (let h = startHr; h <= closeHr; h++) {
+                const opt = document.createElement('option');
+                const val = String(h).padStart(2, '0');
+                opt.value = val;
+                opt.textContent = val;
+                opt.className = "bg-[#16181d] text-white";
+                if (val === selectedHour) {
+                    opt.selected = true;
+                }
+                hourSelect.appendChild(opt);
+            }
+
+            // 2. Populate Minutes
+            const activeHour = hourSelect.value ? Number(hourSelect.value) : null;
+            minuteSelect.innerHTML = '';
+            const minPlaceholder = document.createElement('option');
+            minPlaceholder.value = '';
+            minPlaceholder.textContent = 'Menit...';
+            minPlaceholder.className = "bg-[#16181d] text-gray-500";
+            minuteSelect.appendChild(minPlaceholder);
+
+            if (activeHour !== null) {
+                let minM = 0;
+                if (activeHour === openHr) minM = Math.max(minM, openMin);
+                if (activeHour === currHr) minM = Math.max(minM, currMin);
+
+                let maxM = 59;
+                if (activeHour === closeHr) maxM = closeMin;
+
+                for (let m = minM; m <= maxM; m++) {
+                    const opt = document.createElement('option');
+                    const val = String(m).padStart(2, '0');
+                    opt.value = val;
+                    opt.textContent = val;
+                    opt.className = "bg-[#16181d] text-white";
+                    if (val === selectedMinute) {
+                        opt.selected = true;
+                    }
+                    minuteSelect.appendChild(opt);
+                }
+            }
+
+            // 3. Populate Seconds
+            const activeMinute = minuteSelect.value ? Number(minuteSelect.value) : null;
+            secondSelect.innerHTML = '';
+            const secPlaceholder = document.createElement('option');
+            secPlaceholder.value = '';
+            secPlaceholder.textContent = 'Detik...';
+            secPlaceholder.className = "bg-[#16181d] text-gray-500";
+            secondSelect.appendChild(secPlaceholder);
+
+            if (activeHour !== null && activeMinute !== null) {
+                let minS = 0;
+                if (activeHour === openHr && activeMinute === openMin) minS = Math.max(minS, openSec);
+                if (activeHour === currHr && activeMinute === currMin) minS = Math.max(minS, currSec);
+
+                let maxS = 59;
+                if (activeHour === closeHr && activeMinute === closeMin) maxS = closeSec;
+
+                for (let s = minS; s <= maxS; s++) {
+                    const opt = document.createElement('option');
+                    const val = String(s).padStart(2, '0');
+                    opt.value = val;
+                    opt.textContent = val;
+                    opt.className = "bg-[#16181d] text-white";
+                    if (val === selectedSecond) {
+                        opt.selected = true;
+                    }
+                    secondSelect.appendChild(opt);
+                }
+            }
+
+            updateCombinedPickupTime();
+        };
+
+        // Update Combined Pickup Time
+        window.updateCombinedPickupTime = function() {
+            const hr = document.getElementById('pickup-hour').value;
+            const min = document.getElementById('pickup-minute').value;
+            const sec = document.getElementById('pickup-second').value;
+            const combinedEl = document.getElementById('pickup-time-combined');
+
+            if (hr && min && sec) {
+                combinedEl.value = `${hr}:${min}:${sec}`;
+            } else {
+                combinedEl.value = '';
+            }
+        };
+
+        // Initialize and poll options every 15 seconds to remain realtime
+        updatePickupTimeOptions();
+        setInterval(updatePickupTimeOptions, 15000);
+
         // Checkout Validation
         const checkoutForm = document.querySelector('form[action="{{ route("cart.checkout") }}"]');
         if (checkoutForm) {
             checkoutForm.addEventListener('submit', function (e) {
+                const methodInput = document.querySelector('input[name="shipping_method"]');
+                const method = methodInput ? methodInput.value : 'delivery';
                 const zoneSelect = document.getElementById('shipping-zone-select');
-                if (zoneSelect && !zoneSelect.value) {
+                if (method === 'delivery' && zoneSelect && !zoneSelect.value) {
                     e.preventDefault();
                     if (typeof showCartToast === 'function') {
                         showCartToast(false, 'Silakan pilih Wilayah Pengiriman terlebih dahulu.');
@@ -928,6 +1126,33 @@
                     zoneSelect.focus();
                     // Scroll to zone select
                     zoneSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+
+                if (method === 'pickup') {
+                    const pickupTime = document.getElementById('pickup-time-combined').value;
+                    if (!pickupTime) {
+                        e.preventDefault();
+                        if (typeof showCartToast === 'function') {
+                            showCartToast(false, 'Silakan tentukan jam, menit, dan detik pengambilan.');
+                        } else {
+                            alert('Silakan tentukan jam, menit, dan detik pengambilan.');
+                        }
+                    } else {
+                        const now = new Date();
+                        const currentHr = String(now.getHours()).padStart(2, '0');
+                        const currentMin = String(now.getMinutes()).padStart(2, '0');
+                        const currentSec = String(now.getSeconds()).padStart(2, '0');
+                        const currentTimeStr = `${currentHr}:${currentMin}:${currentSec}`;
+
+                        if (pickupTime < currentTimeStr) {
+                            e.preventDefault();
+                            if (typeof showCartToast === 'function') {
+                                showCartToast(false, 'Waktu pengambilan tidak boleh sudah terlewat (di masa lalu).');
+                            } else {
+                                alert('Waktu pengambilan tidak boleh sudah terlewat (di masa lalu).');
+                            }
+                        }
+                    }
                 }
             });
         }

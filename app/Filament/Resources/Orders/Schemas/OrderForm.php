@@ -6,6 +6,7 @@ use App\Models\Product;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TimePicker;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Schema;
@@ -23,12 +24,25 @@ class OrderForm
                 TextInput::make('customer_phone')
                     ->label('Nomor Telepon')
                     ->required(),
+                Select::make('shipping_method')
+                    ->label('Metode Layanan')
+                    ->options([
+                        'delivery' => 'Kirim (Delivery)',
+                        'pickup' => 'Pickup di Outlet',
+                    ])
+                    ->default('delivery')
+                    ->required(),
+                TimePicker::make('pickup_time')
+                    ->label('Waktu Pengambilan (Pickup Time)')
+                    ->seconds()
+                    ->required(fn ($get) => $get('shipping_method') === 'pickup')
+                    ->visible(fn ($get) => $get('shipping_method') === 'pickup'),
                 TextEntry::make('created_at')
                     ->label('Tanggal & Waktu Pesanan')
                     ->state(fn ($record) => $record && $record->created_at ? $record->created_at->translatedFormat('d F Y H:i:s') : '—'),
                 Textarea::make('shipping_address')
                     ->label('Alamat Pengiriman')
-                    ->required()
+                    ->required(fn ($get) => $get('shipping_method') === 'delivery')
                     ->columnSpanFull(),
                 Textarea::make('notes')
                     ->label('Catatan Pelanggan')

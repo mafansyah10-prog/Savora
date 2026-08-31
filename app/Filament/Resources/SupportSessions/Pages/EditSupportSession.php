@@ -32,8 +32,8 @@ class EditSupportSession extends EditRecord
             ]);
 
             // Calculate expiration based on duration input
-            $duration = (int) ($this->data['duration_minutes'] ?? 10);
-            $newExpiry = now()->addMinutes($duration);
+            $duration = $this->data['duration_minutes'] ?? null;
+            $newExpiry = (!is_null($duration) && $duration !== '') ? now()->addMinutes((int) $duration) : null;
 
             // Set session status to active and apply expiration timestamp
             $this->record->update([

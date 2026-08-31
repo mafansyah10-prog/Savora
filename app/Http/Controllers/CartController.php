@@ -557,9 +557,26 @@ class CartController extends Controller
         $request->validate([
             'customer_name' => 'required|string|max:255',
             'customer_phone' => 'required|regex:/^[0-9]+$/',
-            'shipping_address' => 'required|string',
+            'shipping_method' => 'required|in:delivery,pickup',
+            'shipping_address' => 'required_if:shipping_method,delivery',
+            'pickup_time' => [
+                'required_if:shipping_method,pickup',
+                'nullable',
+                'date_format:H:i:s',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->input('shipping_method') === 'pickup' && $value) {
+                        $currentTime = now()->format('H:i:s');
+                        if ($value < $currentTime) {
+                            $fail('Waktu pengambilan tidak boleh sudah terlewat (di masa lalu).');
+                        }
+                    }
+                }
+            ],
         ], [
             'customer_phone.regex' => 'Nomor telepon hanya boleh berisi angka.',
+            'shipping_address.required_if' => 'Alamat pengiriman wajib diisi untuk metode Kirim (Delivery).',
+            'pickup_time.required_if' => 'Waktu pengambilan wajib diisi untuk metode Pickup di Outlet.',
+            'pickup_time.date_format' => 'Format waktu pengambilan harus jam:menit:detik (HH:MM:SS).',
         ]);
 
         $cart = session()->get('cart', []);
@@ -573,11 +590,21 @@ class CartController extends Controller
             $subtotal += $item['price'] * $item['quantity'];
         }
 
-        // Shipping zone
-        $selectedZoneId = session()->get('shipping_zone_id');
-        $selectedZone = $selectedZoneId ? ShippingZone::find($selectedZoneId) : null;
-        $shippingCost = $selectedZone ? (float) $selectedZone->cost : 0;
-        $shippingZoneName = $selectedZone ? $selectedZone->name : null;
+        // Shipping method and zone
+        $shippingMethod = $request->input('shipping_method', 'delivery');
+        $pickupTime = null;
+        if ($shippingMethod === 'pickup') {
+            $shippingCost = 0;
+            $shippingZoneName = 'Pickup';
+            $shippingAddress = 'Ambil di Toko (Pickup)';
+            $pickupTime = $request->input('pickup_time');
+        } else {
+            $selectedZoneId = session()->get('shipping_zone_id');
+            $selectedZone = $selectedZoneId ? ShippingZone::find($selectedZoneId) : null;
+            $shippingCost = $selectedZone ? (float) $selectedZone->cost : 0;
+            $shippingZoneName = $selectedZone ? $selectedZone->name : null;
+            $shippingAddress = $request->shipping_address;
+        }
 
         // Apply voucher if any
         $voucherCode = null;
@@ -610,7 +637,9 @@ class CartController extends Controller
             'user_id' => auth()->id(),
             'customer_name' => $request->customer_name,
             'customer_phone' => $request->customer_phone,
-            'shipping_address' => $request->shipping_address,
+            'shipping_method' => $shippingMethod,
+            'shipping_address' => $shippingAddress,
+            'pickup_time' => $pickupTime,
             'notes' => $request->notes,
             'shipping_zone_name' => $shippingZoneName,
             'shipping_cost' => $shippingCost,

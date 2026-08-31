@@ -49,8 +49,14 @@ class SupportSessionForm
                     ->label('Durasi Sesi Chat (Menit)')
                     ->numeric()
                     ->default(15)
-                    ->required()
+                    ->nullable()
+                    ->helperText('Kosongkan jika ingin sesi aktif selamanya tanpa batas waktu.')
                     ->dehydrated(false)
+                    ->afterStateHydrated(function ($component, $state, $record) {
+                        if ($record && $record->expires_at === null) {
+                            $component->state(null);
+                        }
+                    })
                     ->visible(fn ($record) => $record && $record->status !== 'resolved'),
 
                 DateTimePicker::make('expires_at')

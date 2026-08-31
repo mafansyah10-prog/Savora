@@ -84,6 +84,12 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
                         Forms\Components\TextInput::make('store_name')
                             ->label('Nama Toko')
                             ->required(),
+                        Forms\Components\FileUpload::make('store_logo')
+                            ->label('Logo Toko')
+                            ->image()
+                            ->directory('logo')
+                            ->nullable()
+                            ->helperText('Unggah gambar logo toko untuk dipasang di header website dan struk belanja.'),
                         Forms\Components\TextInput::make('whatsapp_number')
                             ->label('Nomor Telepon')
                             ->helperText('Gunakan format internasional tanpa tanda +, contoh: 6281234567890')

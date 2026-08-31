@@ -23,10 +23,11 @@ class OrderController extends Controller
         abort_if($order->user_id != auth()->id(), 403);
 
         if (request()->wantsJson() || request()->ajax()) {
+            $isPickup = ($order->shipping_method ?? 'delivery') === 'pickup';
             $statusLabels = [
-                'pending' => 'Pending',
-                'paid' => 'Lunas',
-                'shipped' => 'Dikirim',
+                'pending' => 'Menunggu Konfirmasi',
+                'paid' => 'Lunas (Belum Ready)',
+                'shipped' => $isPickup ? 'Sudah Ready (Siap Diambil)' : 'Sudah Ready (Sedang Dikirim)',
                 'completed' => 'Selesai',
                 'cancelled' => 'Dibatalkan',
             ];
@@ -105,6 +106,10 @@ class OrderController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Bukti terima barang berhasil diunggah! Pesanan Anda telah ditandai sebagai Selesai.');
+        $msg = $order->shipping_method === 'pickup'
+            ? 'Bukti serah terima produk berhasil diunggah! Pesanan Anda telah ditandai sebagai Selesai.'
+            : 'Bukti terima barang berhasil diunggah! Pesanan Anda telah ditandai sebagai Selesai.';
+
+        return back()->with('success', $msg);
     }
 }

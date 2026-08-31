@@ -492,7 +492,11 @@
         <div class="max-w-7xl mx-auto px-4 md:px-8 lg:px-10 py-3 lg:py-4 flex items-center justify-between gap-3 lg:gap-6">
             <!-- Brand (non-clickable) -->
             <span class="flex items-center space-x-2 flex-shrink-0 cursor-default select-none">
-                <div class="w-8 h-8 rounded-full border-2 border-gold-500 flex items-center justify-center font-serif text-lg font-bold text-gold-500">{{ substr(\App\Models\Setting::getGlobal()->store_name, 0, 1) }}</div>
+                @if(\App\Models\Setting::getGlobal()->store_logo)
+                    <img src="{{ asset('storage/' . \App\Models\Setting::getGlobal()->store_logo) }}" alt="Logo" class="h-8 w-auto object-contain">
+                @else
+                    <div class="w-8 h-8 rounded-full border-2 border-gold-500 flex items-center justify-center font-serif text-lg font-bold text-gold-500">{{ substr(\App\Models\Setting::getGlobal()->store_name, 0, 1) }}</div>
+                @endif
                 <span class="text-xl font-bold tracking-tighter text-white font-serif italic">{{ \App\Models\Setting::getGlobal()->store_name }}</span>
             </span>
 
@@ -950,7 +954,11 @@
         <div class="max-w-7xl mx-auto px-6 md:px-8 lg:px-10 grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 text-sm text-gray-500">
             <div class="flex flex-col space-y-4 col-span-2 lg:col-span-1">
                 <a href="{{ route('home') }}" class="flex items-center space-x-2.5 group">
-                    <div class="w-9 h-9 lg:w-10 lg:h-10 rounded-full border-2 border-gold-500 flex items-center justify-center font-serif text-lg lg:text-xl font-bold text-gold-500 group-hover:bg-gold-500 group-hover:text-black transition-all duration-500">{{ substr(\App\Models\Setting::getGlobal()->store_name, 0, 1) }}</div>
+                    @if(\App\Models\Setting::getGlobal()->store_logo)
+                        <img src="{{ asset('storage/' . \App\Models\Setting::getGlobal()->store_logo) }}" alt="Logo" class="h-9 lg:h-10 w-auto object-contain">
+                    @else
+                        <div class="w-9 h-9 lg:w-10 lg:h-10 rounded-full border-2 border-gold-500 flex items-center justify-center font-serif text-lg lg:text-xl font-bold text-gold-500 group-hover:bg-gold-500 group-hover:text-black transition-all duration-500">{{ substr(\App\Models\Setting::getGlobal()->store_name, 0, 1) }}</div>
+                    @endif
                     <span class="text-xl lg:text-2xl font-bold tracking-tighter text-white font-serif italic">{{ \App\Models\Setting::getGlobal()->store_name }}</span>
                 </a>
                 <p class="text-gray-500 text-xs lg:text-sm leading-relaxed max-w-xs">Kelezatan kuliner rumahan kelas artisan. Dibuat dengan penuh dedikasi dari dapur kami untuk keluarga Anda.</p>
