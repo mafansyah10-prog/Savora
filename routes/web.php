@@ -193,8 +193,3 @@ Route::post('/ai-chat/send', [AiAssistantController::class, 'sendLive'])->name('
 Route::get('/ai-chat/admin-messages', [AiAssistantController::class, 'getMessages'])->name('ai.chat.admin-messages');
 
 require __DIR__.'/auth.php';
-
-Route::get('/jalankan-migrasi', function () {
-    $exitCode = \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-    return "Exit code: " . $exitCode . "<br><pre>" . \Illuminate\Support\Facades\Artisan::output() . "</pre>";
-});
