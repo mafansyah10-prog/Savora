@@ -346,6 +346,12 @@
                     {{-- Delivery & Payment info --}}
                     <div class="p-4 md:p-6 space-y-5">
                         <!-- Shipping Method Selector -->
+                        @php
+                            $globalSetting = \App\Models\Setting::getGlobal();
+                            $pickupIsActive = $globalSetting->pickup_is_active ?? true;
+                            $pickupMaxTime = $globalSetting->pickup_max_time;
+                        @endphp
+                        @if ($pickupIsActive)
                         <div>
                             <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-[0.25em] mb-3">Metode Layanan</h3>
                             <input type="hidden" name="shipping_method" :value="shippingMethod">
@@ -364,6 +370,9 @@
                                 </button>
                             </div>
                         </div>
+                        @else
+                        <input type="hidden" name="shipping_method" value="delivery">
+                        @endif
 
                         {{-- Delivery info --}}
                         <div>
@@ -1037,6 +1046,18 @@
                                 showCartToast(false, 'Waktu pengambilan tidak boleh sudah terlewat (di masa lalu).');
                             } else {
                                 alert('Waktu pengambilan tidak boleh sudah terlewat (di masa lalu).');
+                            }
+                            return;
+                        }
+
+                        const maxTime = "{{ $pickupMaxTime }}";
+                        if (maxTime && pickupTime > maxTime) {
+                            e.preventDefault();
+                            const formattedMax = maxTime.substring(0, 5);
+                            if (typeof showCartToast === 'function') {
+                                showCartToast(false, `Batas maksimal waktu pengambilan adalah jam ${formattedMax} WIB.`);
+                            } else {
+                                alert(`Batas maksimal waktu pengambilan adalah jam ${formattedMax} WIB.`);
                             }
                         }
                     }

@@ -564,10 +564,24 @@ class CartController extends Controller
                 'nullable',
                 'date_format:H:i:s',
                 function ($attribute, $value, $fail) use ($request) {
-                    if ($request->input('shipping_method') === 'pickup' && $value) {
-                        $currentTime = now()->format('H:i:s');
-                        if ($value < $currentTime) {
-                            $fail('Waktu pengambilan tidak boleh sudah terlewat (di masa lalu).');
+                    if ($request->input('shipping_method') === 'pickup') {
+                        $globalSetting = Setting::getGlobal();
+                        
+                        if (!($globalSetting->pickup_is_active ?? true)) {
+                            $fail('Layanan Pickup di Outlet saat ini sedang dinonaktifkan.');
+                            return;
+                        }
+
+                        if ($value) {
+                            $currentTime = now()->format('H:i:s');
+                            if ($value < $currentTime) {
+                                $fail('Waktu pengambilan tidak boleh sudah terlewat (di masa lalu).');
+                            }
+
+                            if ($globalSetting->pickup_max_time && $value > $globalSetting->pickup_max_time) {
+                                $formattedMax = substr($globalSetting->pickup_max_time, 0, 5);
+                                $fail("Batas maksimal waktu pengambilan adalah jam {$formattedMax} WIB.");
+                            }
                         }
                     }
                 }

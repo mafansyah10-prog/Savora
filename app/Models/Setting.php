@@ -21,6 +21,7 @@ class Setting extends Model
         'promo_popup_is_active' => 'boolean',
         'promo_popup_product_id' => 'integer',
         'promo_popup_duration_seconds' => 'integer',
+        'pickup_is_active' => 'boolean',
     ];
 
     public function isStoreOpen(): bool

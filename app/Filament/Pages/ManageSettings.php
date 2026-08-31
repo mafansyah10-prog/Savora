@@ -113,6 +113,21 @@ class ManageSettings extends Page implements Forms\Contracts\HasForms
                             ->default(true)
                             ->columnSpanFull(),
 
+                        Forms\Components\Toggle::make('pickup_is_active')
+                            ->label('Aktifkan Layanan Pickup (Ambil di Outlet)')
+                            ->helperText('Jika dinonaktifkan, pelanggan tidak dapat memilih opsi Pickup di Outlet pada saat checkout.')
+                            ->default(true)
+                            ->live()
+                            ->columnSpanFull(),
+
+                        Forms\Components\TimePicker::make('pickup_max_time')
+                            ->label('Batas Maksimal Jam Pickup')
+                            ->helperText('Batas waktu maksimal pelanggan diperbolehkan mengambil pesanan (contoh: 21:00). Kosongkan jika tidak ada batas khusus selain jam operasional toko.')
+                            ->seconds(false)
+                            ->nullable()
+                            ->visible(fn ($get) => $get('pickup_is_active'))
+                            ->columnSpanFull(),
+
                         Forms\Components\Select::make('store_hours_mode')
                             ->label('Mode Jam Operasional')
                             ->options([
