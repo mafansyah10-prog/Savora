@@ -393,21 +393,30 @@
                                     <label class="block text-[10px] text-gray-500 uppercase tracking-widest mb-1.5 font-bold">Jam Pengambilan (Pickup Time)</label>
                                     <div class="grid grid-cols-3 gap-2">
                                         <div>
-                                            <select id="pickup-hour"
+                                            <select id="pickup-hour" onchange="updateCombinedPickupTime()"
                                                 class="w-full bg-black/30 border border-gray-800 hover:border-gray-700 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/20 rounded-xl py-2.5 px-3 text-xs text-white outline-none transition">
                                                 <option value="" class="bg-[#16181d] text-gray-500">Jam...</option>
+                                                @for ($i = 0; $i < 24; $i++)
+                                                    <option value="{{ sprintf('%02d', $i) }}" class="bg-[#16181d] text-white">{{ sprintf('%02d', $i) }}</option>
+                                                @endfor
                                             </select>
                                         </div>
                                         <div>
-                                            <select id="pickup-minute"
+                                            <select id="pickup-minute" onchange="updateCombinedPickupTime()"
                                                 class="w-full bg-black/30 border border-gray-800 hover:border-gray-700 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/20 rounded-xl py-2.5 px-3 text-xs text-white outline-none transition">
                                                 <option value="" class="bg-[#16181d] text-gray-500">Menit...</option>
+                                                @for ($i = 0; $i < 60; $i++)
+                                                    <option value="{{ sprintf('%02d', $i) }}" class="bg-[#16181d] text-white">{{ sprintf('%02d', $i) }}</option>
+                                                @endfor
                                             </select>
                                         </div>
                                         <div>
-                                            <select id="pickup-second"
+                                            <select id="pickup-second" onchange="updateCombinedPickupTime()"
                                                 class="w-full bg-black/30 border border-gray-800 hover:border-gray-700 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/20 rounded-xl py-2.5 px-3 text-xs text-white outline-none transition">
                                                 <option value="" class="bg-[#16181d] text-gray-500">Detik...</option>
+                                                @for ($i = 0; $i < 60; $i++)
+                                                    <option value="{{ sprintf('%02d', $i) }}" class="bg-[#16181d] text-white">{{ sprintf('%02d', $i) }}</option>
+                                                @endfor
                                             </select>
                                         </div>
                                     </div>
@@ -973,126 +982,6 @@
             }
         };
 
-        @php
-            $todayHours = \App\Models\Setting::getGlobal()->getTodayHours();
-            $openTime = $todayHours['open_time'] ?? '00:00:00';
-            $closeTime = $todayHours['close_time'] ?? '23:59:59';
-        @endphp
-
-        const openTimeStr = "{{ $openTime }}";
-        const closeTimeStr = "{{ $closeTime }}";
-
-        window.updatePickupTimeOptions = function(rebuildHours = false) {
-            const hourSelect = document.getElementById('pickup-hour');
-            const minuteSelect = document.getElementById('pickup-minute');
-            const secondSelect = document.getElementById('pickup-second');
-
-            if (!hourSelect || !minuteSelect || !secondSelect) return;
-
-            const selectedHour = hourSelect.value;
-            const selectedMinute = minuteSelect.value;
-            const selectedSecond = secondSelect.value;
-
-            const now = new Date();
-            const currHr = now.getHours();
-            const currMin = now.getMinutes();
-            const currSec = now.getSeconds();
-
-            const openParts = openTimeStr.split(':');
-            const closeParts = closeTimeStr.split(':');
-
-            const openHr = Number(openParts[0]) || 0;
-            const openMin = Number(openParts[1]) || 0;
-            const openSec = Number(openParts[2]) || 0;
-
-            const closeHr = Number(closeParts[0]) || 0;
-            const closeMin = Number(closeParts[1]) || 0;
-            const closeSec = Number(closeParts[2]) || 0;
-
-            const startHr = Math.max(openHr, currHr);
-
-            // 1. Populate Hours (Only rebuild if requested or empty)
-            if (rebuildHours || hourSelect.options.length <= 1) {
-                const currentHourOptions = Array.from(hourSelect.options);
-                hourSelect.innerHTML = '';
-                hourSelect.appendChild(currentHourOptions[0]); // placeholder
-
-                for (let h = startHr; h <= closeHr; h++) {
-                    const opt = document.createElement('option');
-                    const val = String(h).padStart(2, '0');
-                    opt.value = val;
-                    opt.textContent = val;
-                    opt.className = "bg-[#16181d] text-white";
-                    if (val === selectedHour) {
-                        opt.selected = true;
-                    }
-                    hourSelect.appendChild(opt);
-                }
-            }
-
-            // 2. Populate Minutes
-            const activeHour = hourSelect.value ? Number(hourSelect.value) : null;
-            minuteSelect.innerHTML = '';
-            const minPlaceholder = document.createElement('option');
-            minPlaceholder.value = '';
-            minPlaceholder.textContent = 'Menit...';
-            minPlaceholder.className = "bg-[#16181d] text-gray-500";
-            minuteSelect.appendChild(minPlaceholder);
-
-            if (activeHour !== null) {
-                let minM = 0;
-                if (activeHour === openHr) minM = Math.max(minM, openMin);
-                if (activeHour === currHr) minM = Math.max(minM, currMin);
-
-                let maxM = 59;
-                if (activeHour === closeHr) maxM = closeMin;
-
-                for (let m = minM; m <= maxM; m++) {
-                    const opt = document.createElement('option');
-                    const val = String(m).padStart(2, '0');
-                    opt.value = val;
-                    opt.textContent = val;
-                    opt.className = "bg-[#16181d] text-white";
-                    if (val === selectedMinute) {
-                        opt.selected = true;
-                    }
-                    minuteSelect.appendChild(opt);
-                }
-            }
-
-            // 3. Populate Seconds
-            const activeMinute = minuteSelect.value ? Number(minuteSelect.value) : null;
-            secondSelect.innerHTML = '';
-            const secPlaceholder = document.createElement('option');
-            secPlaceholder.value = '';
-            secPlaceholder.textContent = 'Detik...';
-            secPlaceholder.className = "bg-[#16181d] text-gray-500";
-            secondSelect.appendChild(secPlaceholder);
-
-            if (activeHour !== null && activeMinute !== null) {
-                let minS = 0;
-                if (activeHour === openHr && activeMinute === openMin) minS = Math.max(minS, openSec);
-                if (activeHour === currHr && activeMinute === currMin) minS = Math.max(minS, currSec);
-
-                let maxS = 59;
-                if (activeHour === closeHr && activeMinute === closeMin) maxS = closeSec;
-
-                for (let s = minS; s <= maxS; s++) {
-                    const opt = document.createElement('option');
-                    const val = String(s).padStart(2, '0');
-                    opt.value = val;
-                    opt.textContent = val;
-                    opt.className = "bg-[#16181d] text-white";
-                    if (val === selectedSecond) {
-                        opt.selected = true;
-                    }
-                    secondSelect.appendChild(opt);
-                }
-            }
-
-            updateCombinedPickupTime();
-        };
-
         // Update Combined Pickup Time
         window.updateCombinedPickupTime = function() {
             const hr = document.getElementById('pickup-hour').value;
@@ -1106,21 +995,6 @@
                 combinedEl.value = '';
             }
         };
-
-        // Bind event listeners using JavaScript
-        const hrSel = document.getElementById('pickup-hour');
-        const minSel = document.getElementById('pickup-minute');
-        const secSel = document.getElementById('pickup-second');
-
-        if (hrSel) hrSel.addEventListener('change', function() { updatePickupTimeOptions(false); });
-        if (minSel) minSel.addEventListener('change', function() { updatePickupTimeOptions(false); });
-        if (secSel) secSel.addEventListener('change', function() { updatePickupTimeOptions(false); });
-
-        // Initialize and poll options every 15 seconds to remain realtime
-        updatePickupTimeOptions(true);
-        setInterval(function() {
-            updatePickupTimeOptions(true);
-        }, 15000);
 
         // Checkout Validation
         const checkoutForm = document.querySelector('form[action="{{ route("cart.checkout") }}"]');
