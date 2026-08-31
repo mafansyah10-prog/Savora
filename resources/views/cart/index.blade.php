@@ -393,19 +393,19 @@
                                     <label class="block text-[10px] text-gray-500 uppercase tracking-widest mb-1.5 font-bold">Jam Pengambilan (Pickup Time)</label>
                                     <div class="grid grid-cols-3 gap-2">
                                         <div>
-                                            <select id="pickup-hour" onchange="updatePickupTimeOptions()"
+                                            <select id="pickup-hour"
                                                 class="w-full bg-black/30 border border-gray-800 hover:border-gray-700 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/20 rounded-xl py-2.5 px-3 text-xs text-white outline-none transition">
                                                 <option value="" class="bg-[#16181d] text-gray-500">Jam...</option>
                                             </select>
                                         </div>
                                         <div>
-                                            <select id="pickup-minute" onchange="updatePickupTimeOptions()"
+                                            <select id="pickup-minute"
                                                 class="w-full bg-black/30 border border-gray-800 hover:border-gray-700 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/20 rounded-xl py-2.5 px-3 text-xs text-white outline-none transition">
                                                 <option value="" class="bg-[#16181d] text-gray-500">Menit...</option>
                                             </select>
                                         </div>
                                         <div>
-                                            <select id="pickup-second" onchange="updatePickupTimeOptions()"
+                                            <select id="pickup-second"
                                                 class="w-full bg-black/30 border border-gray-800 hover:border-gray-700 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/20 rounded-xl py-2.5 px-3 text-xs text-white outline-none transition">
                                                 <option value="" class="bg-[#16181d] text-gray-500">Detik...</option>
                                             </select>
@@ -982,7 +982,7 @@
         const openTimeStr = "{{ $openTime }}";
         const closeTimeStr = "{{ $closeTime }}";
 
-        window.updatePickupTimeOptions = function() {
+        window.updatePickupTimeOptions = function(rebuildHours = false) {
             const hourSelect = document.getElementById('pickup-hour');
             const minuteSelect = document.getElementById('pickup-minute');
             const secondSelect = document.getElementById('pickup-second');
@@ -1011,21 +1011,23 @@
 
             const startHr = Math.max(openHr, currHr);
 
-            // 1. Populate Hours
-            const currentHourOptions = Array.from(hourSelect.options);
-            hourSelect.innerHTML = '';
-            hourSelect.appendChild(currentHourOptions[0]); // placeholder
+            // 1. Populate Hours (Only rebuild if requested or empty)
+            if (rebuildHours || hourSelect.options.length <= 1) {
+                const currentHourOptions = Array.from(hourSelect.options);
+                hourSelect.innerHTML = '';
+                hourSelect.appendChild(currentHourOptions[0]); // placeholder
 
-            for (let h = startHr; h <= closeHr; h++) {
-                const opt = document.createElement('option');
-                const val = String(h).padStart(2, '0');
-                opt.value = val;
-                opt.textContent = val;
-                opt.className = "bg-[#16181d] text-white";
-                if (val === selectedHour) {
-                    opt.selected = true;
+                for (let h = startHr; h <= closeHr; h++) {
+                    const opt = document.createElement('option');
+                    const val = String(h).padStart(2, '0');
+                    opt.value = val;
+                    opt.textContent = val;
+                    opt.className = "bg-[#16181d] text-white";
+                    if (val === selectedHour) {
+                        opt.selected = true;
+                    }
+                    hourSelect.appendChild(opt);
                 }
-                hourSelect.appendChild(opt);
             }
 
             // 2. Populate Minutes
@@ -1105,9 +1107,20 @@
             }
         };
 
+        // Bind event listeners using JavaScript
+        const hrSel = document.getElementById('pickup-hour');
+        const minSel = document.getElementById('pickup-minute');
+        const secSel = document.getElementById('pickup-second');
+
+        if (hrSel) hrSel.addEventListener('change', function() { updatePickupTimeOptions(false); });
+        if (minSel) minSel.addEventListener('change', function() { updatePickupTimeOptions(false); });
+        if (secSel) secSel.addEventListener('change', function() { updatePickupTimeOptions(false); });
+
         // Initialize and poll options every 15 seconds to remain realtime
-        updatePickupTimeOptions();
-        setInterval(updatePickupTimeOptions, 15000);
+        updatePickupTimeOptions(true);
+        setInterval(function() {
+            updatePickupTimeOptions(true);
+        }, 15000);
 
         // Checkout Validation
         const checkoutForm = document.querySelector('form[action="{{ route("cart.checkout") }}"]');
